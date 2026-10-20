@@ -18,7 +18,7 @@ export function Header() {
           Подключайте Claude и GPT через единый API — без лишних интеграций.
         </p>
         <Button asChild size="lg" className="mt-6 lg:mt-8">
-          <Link href={PATHS.MODELS}>
+          <Link href={PATHS.DASHBOARD.ROOT}>
             Начать работу
             <Icon name="arrow" size={17} />
           </Link>
