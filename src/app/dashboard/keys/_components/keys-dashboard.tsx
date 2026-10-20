@@ -18,6 +18,7 @@ import { TopUpModal } from "@/components/modals/top-up-modal";
 import { ModalShell } from "@/components/modals/modal-shell";
 import type { ApiKeySummary, IssuedApiKey } from "@/configs/types/api.types";
 import { dashboardFetch } from "@/lib/dashboard-client";
+import { Skeleton } from "../../_components/skeleton";
 
 export function KeysDashboard() {
   const [keys, setKeys] = useState<ApiKeySummary[]>([]);
@@ -212,19 +213,22 @@ export function KeysDashboard() {
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Metric
               label="API-ключи"
-              value={loading || error ? "—" : String(keys.length)}
+              value={loading || error ? undefined : String(keys.length)}
+              loading={loading}
               detail="Текущий месяц · UTC"
             />
             <Metric
               label="Списания за месяц"
-              value={loading || error ? "—" : formatRubles(totalSpent)}
+              value={loading || error ? undefined : formatRubles(totalSpent)}
+              loading={loading}
               detail="Текущий месяц · UTC"
             />
             <Metric
               label="Запросы за месяц"
               value={
-                loading || error ? "—" : totalRequests.toLocaleString("ru-RU")
+                loading || error ? undefined : totalRequests.toLocaleString("ru-RU")
               }
+              loading={loading}
               detail="Текущий месяц · UTC"
             />
           </div>
@@ -244,21 +248,37 @@ export function KeysDashboard() {
               </p>
             </div>
             <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-[#a5a5a1]">
-              {keys.length}{" "}
+              {loading || error ? (
+                <Skeleton className="h-4 w-8" />
+              ) : (
+                <>{keys.length}{" "}
               {keys.length === 1
                 ? "ключ"
                 : keys.length > 1 && keys.length < 5
                   ? "ключа"
-                  : "ключей"}
+                  : "ключей"}</>
+              )}
             </span>
           </div>
 
-          {loading || error ? (
+          {loading ? (
+            <ul className="list-none p-0" aria-label="Загрузка ключей">
+              {[0, 1, 2].map((row) => (
+                <li key={row} className="border-t border-white/[0.06] px-5 py-4 sm:px-6">
+                  <div className="grid gap-4 lg:grid-cols-[minmax(220px,1.5fr)_minmax(320px,1.3fr)_auto] lg:items-center">
+                    <Skeleton className="h-5 w-40" />
+                    <Skeleton className="h-4 w-56" />
+                    <Skeleton className="h-9 w-24" />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : error ? (
             <p
               className="px-5 py-8 text-sm text-[#a5a5a1]"
-              role={error ? "alert" : "status"}
+              role="alert"
             >
-              {error ?? "Загружаем ключи…"}
+              {error}
             </p>
           ) : keys.length > 0 ? (
             <ul className="list-none p-0">
@@ -452,17 +472,19 @@ export function KeysDashboard() {
 function Metric({
   label,
   value,
+  loading = false,
   detail,
 }: {
   label: string;
-  value: string;
+  value?: string;
+  loading?: boolean;
   detail: string;
 }) {
   return (
     <div className="rounded-[14px] bg-[#242424] px-4 py-4">
       <p className="text-xs text-[#999994]">{label}</p>
       <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
-        {value}
+        {loading ? <Skeleton className="h-7 w-28" /> : value ?? "Недоступно"}
       </p>
       <p className="mt-1 text-[11px] text-[#777875]">{detail}</p>
     </div>

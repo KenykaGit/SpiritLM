@@ -1,11 +1,14 @@
 import type { DashboardSummary } from "@/configs/types/api.types";
+import { Skeleton } from "./skeleton";
 
 export function UsageDetails({
   summary,
   periodLabel,
+  loading = summary === null,
 }: {
   summary: DashboardSummary | null;
   periodLabel: string;
+  loading?: boolean;
 }) {
   const details = [
     { label: "Входящие", value: summary?.inputTokens },
@@ -27,7 +30,11 @@ export function UsageDetails({
           <div key={item.label}>
             <dt className="text-xs text-[#999994]">{item.label}</dt>
             <dd className="mt-1 text-xl font-semibold tabular-nums">
-              {item.value?.toLocaleString("ru-RU") ?? "—"}
+              {item.value === undefined && loading ? (
+                <Skeleton className="h-6 w-20" />
+              ) : (
+                item.value?.toLocaleString("ru-RU") ?? "Недоступно"
+              )}
             </dd>
           </div>
         ))}
@@ -36,9 +43,20 @@ export function UsageDetails({
         Расход токенов указан без повторного учёта данных кэша.
       </p>
       <h3 className="mt-6 text-sm font-medium">По моделям</h3>
-      {!summary?.models.length ? (
+      {!summary && loading ? (
+        <ul className="mt-3 space-y-3" aria-label="Загрузка моделей">
+          {[0, 1, 2].map((row) => (
+            <li key={row} className="flex items-center justify-between gap-4 py-2">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-4 w-16" />
+            </li>
+          ))}
+        </ul>
+      ) : !summary ? (
+        <p className="mt-3 text-sm text-[#858580]">Недоступно</p>
+      ) : !summary.models.length ? (
         <p className="mt-3 text-sm text-[#858580]">
-          {summary ? "Пока нет запросов" : "Загружаем…"}
+          Пока нет запросов
         </p>
       ) : (
         <ul className="mt-2 divide-y divide-white/[0.06]">
@@ -66,7 +84,13 @@ export function UsageDetails({
   );
 }
 
-export function CreditHistory({ summary }: { summary: DashboardSummary | null }) {
+export function CreditHistory({
+  summary,
+  loading = summary === null,
+}: {
+  summary: DashboardSummary | null;
+  loading?: boolean;
+}) {
   return (
     <section
       className="mt-6 rounded-[18px] bg-[#1b1b1b] p-5 sm:p-6"
@@ -76,9 +100,23 @@ export function CreditHistory({ summary }: { summary: DashboardSummary | null })
         История начислений
       </h2>
       <p className="mt-1 text-xs text-[#858580]">Последние 20 операций</p>
-      {!summary?.credits.length ? (
+      {!summary && loading ? (
+        <ul className="mt-4 space-y-4" aria-label="Загрузка начислений">
+          {[0, 1, 2].map((row) => (
+            <li key={row} className="flex items-center justify-between gap-4 py-2">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-44" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+              <Skeleton className="h-4 w-16" />
+            </li>
+          ))}
+        </ul>
+      ) : !summary ? (
+        <p className="mt-6 text-sm text-[#858580]">Недоступно</p>
+      ) : !summary.credits.length ? (
         <p className="mt-6 text-sm text-[#858580]">
-          {summary ? "Начислений пока нет" : "Загружаем…"}
+          Начислений пока нет
         </p>
       ) : (
         <ul className="mt-4 divide-y divide-white/[0.06]">

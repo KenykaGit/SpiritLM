@@ -63,7 +63,7 @@ export const MODEL_GROUPS: ModelGroup[] = [
       { id: "google/gemini-3.8-flash", name: "Gemini 3.8 Flash", pricePerMillionTokens: "18 ₽" },
       { id: "google/gemini-3.7-flash", name: "Gemini 3.7 Flash", pricePerMillionTokens: "18 ₽" },
       { id: "google/gemini-3.6-flash", name: "Gemini 3.6 Flash", pricePerMillionTokens: "18 ₽" },
-      { id: "google/gemini-3.1-pro", name: "Gemini 3.1 Pro", pricePerMillionTokens: "18 ₽", frontier: true },
+      { id: "google/gemini-3.1-pro", name: "Gemini 3.1 Pro", pricePerMillionTokens: "22 ₽", frontier: true },
     ],
   },
   {
@@ -73,9 +73,9 @@ export const MODEL_GROUPS: ModelGroup[] = [
     modelProviderName: "Grok",
     modelProviderIcon: IMAGES.AI.XAI,
     models: [
-      { id: "x-ai/grok-4.7", name: "Grok 4.7", pricePerMillionTokens: "4,50 ₽", frontier: true },
-      { id: "x-ai/grok-4.6", name: "Grok 4.6", pricePerMillionTokens: "4,50 ₽", frontier: true },
-      { id: "x-ai/grok-4.5", name: "Grok 4.5", pricePerMillionTokens: "4,50 ₽" },
+      { id: "x-ai/grok-4.7", name: "Grok 4.7", pricePerMillionTokens: "4,60 ₽", frontier: true },
+      { id: "x-ai/grok-4.6", name: "Grok 4.6", pricePerMillionTokens: "4,60 ₽", frontier: true },
+      { id: "x-ai/grok-4.5", name: "Grok 4.5", pricePerMillionTokens: "4,60 ₽" },
     ],
   },
 ];

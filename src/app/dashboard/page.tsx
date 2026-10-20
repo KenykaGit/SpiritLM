@@ -23,6 +23,7 @@ import type {
 } from "@/configs/types/api.types";
 import { dashboardFetch } from "@/lib/dashboard-client";
 import { CreditHistory, UsageDetails } from "./_components/usage-details";
+import { Skeleton } from "./_components/skeleton";
 
 const chartConfig = {
   tokens: {
@@ -31,7 +32,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 export default function Dashboard() {
-  const { user } = useUser();
+  const { user, isLoaded: isUserLoaded } = useUser();
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>("2d");
@@ -69,11 +70,7 @@ export default function Dashboard() {
   const average = summary?.requestCount
     ? Math.round(summary.tokens / summary.requestCount)
     : 0;
-  const username =
-    user?.username ||
-    user?.firstName ||
-    user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
-    "Пользователь";
+  const username = user?.username || user?.firstName || user?.primaryEmailAddress?.emailAddress?.split("@")[0];
   const periodLabel =
     DASHBOARD_PERIOD_OPTIONS.find((period) => period.value === selectedPeriod)
       ?.label ?? "48 часов";
@@ -104,12 +101,16 @@ export default function Dashboard() {
         >
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div>
-              <p className="text-sm text-[#999994]">Главная</p>
+              {isUserLoaded ? (
+                <p className="text-sm text-[#999994]">@{username ?? "Пользователь"}</p>
+              ) : (
+                <Skeleton className="h-4 w-28" />
+              )}
               <h1
                 id="dashboard-page-title"
                 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl"
               >
-                {username}
+                Главная
               </h1>
             </div>
             <button
@@ -124,17 +125,20 @@ export default function Dashboard() {
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Metric
               label="Баланс"
-              value={summary ? rubles(summary.balance) : "—"}
+              value={summary ? rubles(summary.balance) : undefined}
+              loading={!summary && !error}
               detail="Начисляется вручную"
             />
             <Metric
               label="Потрачено за всё время"
-              value={summary ? rubles(summary.spent) : "—"}
+              value={summary ? rubles(summary.spent) : undefined}
+              loading={!summary && !error}
               detail="Фактические списания"
             />
             <Metric
               label={`Токенов ${periodTitle}`}
-              value={summary ? summary.tokens.toLocaleString("ru-RU") : "—"}
+              value={summary ? summary.tokens.toLocaleString("ru-RU") : undefined}
+              loading={!summary && !error}
               detail={
                 summary?.unknownUsageCount
                   ? `Запросов без данных о расходе: ${summary.unknownUsageCount}`
@@ -185,7 +189,13 @@ export default function Dashboard() {
                   </p>
                 </div>
                 <span className="rounded-full bg-[#ffe02e]/10 px-3 py-1.5 text-xs font-medium text-[#ffe02e]">
-                  {summary ? summary.tokens.toLocaleString("ru-RU") : "—"} токенов
+                  {summary ? (
+                    `${summary.tokens.toLocaleString("ru-RU")} токенов`
+                  ) : error ? (
+                    "Недоступно"
+                  ) : (
+                    <Skeleton className="h-4 w-28" />
+                  )}
                 </span>
               </div>
               <ChartContainer
@@ -306,21 +316,21 @@ export default function Dashboard() {
                 <div className="flex items-end justify-between gap-3">
                   <span className="text-sm text-[#a5a5a1]">Всего токенов</span>
                   <span className="text-2xl font-semibold tabular-nums">
-                    {summary ? summary.tokens.toLocaleString("ru-RU") : "—"}
+                    {summary ? summary.tokens.toLocaleString("ru-RU") : error ? "Недоступно" : <Skeleton className="h-7 w-24" />}
                   </span>
                 </div>
                 <div className="h-px bg-white/[0.07]" />
                 <div className="flex items-end justify-between gap-3">
                   <span className="text-sm text-[#a5a5a1]">Запросы</span>
                   <span className="text-2xl font-semibold">
-                    {summary ? summary.requestCount.toLocaleString("ru-RU") : "—"}
+                    {summary ? summary.requestCount.toLocaleString("ru-RU") : error ? "Недоступно" : <Skeleton className="h-7 w-16" />}
                   </span>
                 </div>
                 <div className="h-px bg-white/[0.07]" />
                 <div className="flex items-end justify-between gap-3">
                   <span className="text-sm text-[#a5a5a1]">Средний расход</span>
                   <span className="text-xl font-semibold sm:text-2xl">
-                    {summary ? average.toLocaleString("ru-RU") : "—"}{" "}
+                    {summary ? average.toLocaleString("ru-RU") : error ? "Недоступно" : <Skeleton className="h-7 w-16" />}{" "}
                     <span className="text-xs font-normal text-[#858580] sm:text-sm">
                       токена / запрос
                     </span>
@@ -330,7 +340,7 @@ export default function Dashboard() {
                 <div className="flex items-end justify-between gap-3">
                   <span className="text-sm text-[#a5a5a1]">Расход средств</span>
                   <span className="text-2xl font-semibold">
-                    {summary ? rubles(summary.cost) : "—"}
+                    {summary ? rubles(summary.cost) : error ? "Недоступно" : <Skeleton className="h-7 w-24" />}
                   </span>
                 </div>
               </div>
@@ -338,7 +348,11 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <UsageDetails summary={summary} periodLabel={periodLabel} />
+        <UsageDetails
+          summary={summary}
+          periodLabel={periodLabel}
+          loading={!summary && !error}
+        />
         <section
           className="overflow-hidden rounded-[18px] bg-[#1b1b1b]"
           aria-labelledby="requests-title"
@@ -369,20 +383,43 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {!requests.length && (
+                {!requests.length && summary && (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-10 text-center text-[#858580]"
-                    >
-                      {summary
-                        ? "Пока нет запросов"
-                        : error
-                          ? "Статистика недоступна"
-                          : "Загружаем статистику…"}
+                    <td colSpan={6} className="px-6 py-10 text-center text-[#858580]">
+                      Пока нет запросов
                     </td>
                   </tr>
                 )}
+                {!requests.length && error && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-10 text-center text-[#858580]">
+                      Статистика недоступна
+                    </td>
+                  </tr>
+                )}
+                {!requests.length && !summary && !error &&
+                  [0, 1, 2].map((row) => (
+                    <tr key={`request-skeleton-${row}`} className="border-t border-white/[0.06]">
+                      <td className="px-5 py-4 sm:px-6">
+                        <Skeleton className="h-4 w-28" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="h-3 w-24" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="h-3 w-28" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="ml-auto h-4 w-12" />
+                      </td>
+                      <td className="px-4 py-4">
+                        <Skeleton className="ml-auto h-4 w-16" />
+                      </td>
+                      <td className="px-5 py-4 sm:px-6">
+                        <Skeleton className="ml-auto h-5 w-16 rounded-full" />
+                      </td>
+                    </tr>
+                  ))}
                 {requests.map((request) => (
                   <tr key={request.id} className="border-t border-white/[0.06]">
                     <td className="whitespace-nowrap px-5 py-4 font-medium text-[#f3f2ee] sm:px-6">
@@ -420,7 +457,7 @@ export default function Dashboard() {
             </table>
           </div>
         </section>
-        <CreditHistory summary={summary} />
+        <CreditHistory summary={summary} loading={!summary && !error} />
       </div>
       <TopUpModal open={topUpOpen} onClose={() => setTopUpOpen(false)} />
     </main>
@@ -430,17 +467,19 @@ export default function Dashboard() {
 function Metric({
   label,
   value,
+  loading = false,
   detail,
 }: {
   label: string;
-  value: string;
+  value?: string;
+  loading?: boolean;
   detail: string;
 }) {
   return (
     <div className="rounded-[14px] bg-[#242424] px-4 py-4">
       <p className="text-xs text-[#999994]">{label}</p>
       <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
-        {value}
+        {loading ? <Skeleton className="h-7 w-28" /> : value ?? "Недоступно"}
       </p>
       <p className="mt-1 text-[11px] text-[#777875]">{detail}</p>
     </div>
