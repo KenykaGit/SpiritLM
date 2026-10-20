@@ -58,6 +58,25 @@ test("dashboard aggregates actual usage and isolates account history", async () 
         pricePerMillion: new Prisma.Decimal("0.90"),
       })),
     });
+    await db.apiRequest.createMany({
+      data: [
+        { daysAgo: 5, totalTokens: 11 },
+        { daysAgo: 20, totalTokens: 13 },
+        { daysAgo: 45, totalTokens: 17 },
+      ].map(({ daysAgo, totalTokens }) => ({
+        userId: user.id,
+        model: body.model,
+        upstreamModel: "deepseek-v4-flash",
+        streaming: false,
+        pricePerMillion: new Prisma.Decimal("0.90"),
+        totalTokens,
+        inputTokens: totalTokens,
+        outputTokens: 0,
+        cachedTokens: 0,
+        createdAt: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000),
+        status: "SUCCEEDED" as const,
+      })),
+    });
     const summary = await dashboardSummary(
       await db.user.findUniqueOrThrow({ where: { id: user.id } }),
     );
@@ -73,6 +92,28 @@ test("dashboard aggregates actual usage and isolates account history", async () 
     assert.equal(summary.credits.length, 1);
     assert.equal(summary.requestCount, 4);
     assert.equal(summary.unknownUsageCount, 2);
+    const week = await dashboardSummary(
+      await db.user.findUniqueOrThrow({ where: { id: user.id } }),
+      "7d",
+    );
+    assert.equal(week.tokens, 43);
+    assert.equal(week.requestCount, 5);
+    const month = await dashboardSummary(
+      await db.user.findUniqueOrThrow({ where: { id: user.id } }),
+      "30d",
+    );
+    assert.equal(month.tokens, 56);
+    assert.equal(month.requestCount, 6);
+    const allTime = await dashboardSummary(
+      await db.user.findUniqueOrThrow({ where: { id: user.id } }),
+      "all",
+    );
+    assert.equal(allTime.tokens, 73);
+    assert.equal(allTime.requestCount, 7);
+    assert.equal(
+      allTime.usage.reduce((total, item) => total + item.tokens, 0),
+      73,
+    );
     const isolated = await dashboardSummary(other);
     assert.equal(isolated.tokens, 0);
     assert.equal(isolated.requests.length, 0);

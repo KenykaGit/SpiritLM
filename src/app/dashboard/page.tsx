@@ -2,7 +2,10 @@
 
 import { PATHS } from "@/configs/paths/pages.paths";
 
-import { DASHBOARD_POLL_MS } from "@/configs/consts/dashboard.const";
+import {
+  DASHBOARD_PERIOD_OPTIONS,
+  DASHBOARD_POLL_MS,
+} from "@/configs/consts/dashboard.const";
 import { useUser } from "@clerk/nextjs";
 import { IconPlus } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -14,9 +17,12 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { TopUpModal } from "@/components/modals/top-up-modal";
-import type { DashboardSummary } from "@/configs/types/api.types";
+import type {
+  DashboardPeriod,
+  DashboardSummary,
+} from "@/configs/types/api.types";
 import { dashboardFetch } from "@/lib/dashboard-client";
-import { UsageDetails } from "./_components/usage-details";
+import { CreditHistory, UsageDetails } from "./_components/usage-details";
 
 const chartConfig = {
   tokens: {
@@ -28,13 +34,14 @@ export default function Dashboard() {
   const { user } = useUser();
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>("2d");
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
       try {
         const data = await dashboardFetch<DashboardSummary>(
-          PATHS.API.DASHBOARD.SUMMARY,
+          `${PATHS.API.DASHBOARD.SUMMARY}?period=${selectedPeriod}`,
           { signal: controller.signal },
         );
         setSummary(data);
@@ -56,7 +63,7 @@ export default function Dashboard() {
       controller.abort();
       window.clearInterval(interval);
     };
-  }, []);
+  }, [selectedPeriod]);
   const usageData = summary?.usage ?? [];
   const requests = summary?.requests ?? [];
   const average = summary?.requestCount
@@ -67,6 +74,15 @@ export default function Dashboard() {
     user?.firstName ||
     user?.primaryEmailAddress?.emailAddress?.split("@")[0] ||
     "Пользователь";
+  const periodLabel =
+    DASHBOARD_PERIOD_OPTIONS.find((period) => period.value === selectedPeriod)
+      ?.label ?? "48 часов";
+  const periodTitle =
+    selectedPeriod === "all"
+      ? "за всё время"
+      : selectedPeriod === "2d"
+        ? "за 48 часов"
+        : `за ${periodLabel}`;
 
   return (
     <main
@@ -117,7 +133,7 @@ export default function Dashboard() {
               detail="Фактические списания"
             />
             <Metric
-              label="Токенов за 48 часов"
+              label={`Токенов ${periodTitle}`}
               value={summary ? summary.tokens.toLocaleString("ru-RU") : "—"}
               detail={
                 summary?.unknownUsageCount
@@ -128,122 +144,201 @@ export default function Dashboard() {
           </div>
         </section>
 
-        <section
-          className="mb-6 grid gap-4 lg:grid-cols-[1.55fr_1fr]"
-          aria-label="Использование токенов"
-        >
-          <article className="rounded-[18px] bg-[#1b1b1b] p-5 sm:p-6">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-base font-semibold">Расход токенов</h2>
-                <p className="mt-1 text-xs text-[#858580]">
-                  Почасовой расход · UTC
-                </p>
-              </div>
-              <span className="rounded-full bg-[#ffe02e]/10 px-3 py-1.5 text-xs font-medium text-[#ffe02e]">
-                {summary ? summary.tokens.toLocaleString("ru-RU") : "—"} токенов
-              </span>
-            </div>
-            <ChartContainer
-              config={chartConfig}
-              className="mt-5 h-48 w-full aspect-auto"
-              aria-label="Расход токенов за последние 48 часов"
-            >
-              <AreaChart
-                accessibilityLayer
-                data={usageData}
-                margin={{ left: 4, right: 8, top: 8 }}
-              >
-                <defs>
-                  <linearGradient id="fillTokens" x1="0" y1="0" x2="0" y2="1">
-                    <stop
-                      offset="0%"
-                      stopColor="var(--color-tokens)"
-                      stopOpacity={0.24}
-                    />
-                    <stop
-                      offset="100%"
-                      stopColor="var(--color-tokens)"
-                      stopOpacity={0.01}
-                    />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  vertical={false}
-                  stroke="#ffffff"
-                  strokeOpacity={0.08}
-                  strokeDasharray="3 4"
-                />
-                <XAxis
-                  dataKey="time"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={9}
-                  interval={5}
-                  tick={{ fill: "#777875", fontSize: 10 }}
-                  tickFormatter={(value: string) =>
-                    new Date(value).toLocaleTimeString("ru-RU", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      timeZone: "UTC",
-                    })
-                  }
-                />
-                <ChartTooltip
-                  cursor={{ stroke: "#777875", strokeDasharray: "4 4" }}
-                  content={<ChartTooltipContent indicator="line" />}
-                />
-                <Area
-                  dataKey="tokens"
-                  type="monotone"
-                  stroke="var(--color-tokens)"
-                  strokeWidth={2}
-                  fill="url(#fillTokens)"
-                  dot={false}
-                  activeDot={{
-                    r: 4,
-                    fill: "#ffe02e",
-                    stroke: "#1b1b1b",
-                    strokeWidth: 2,
-                  }}
-                />
-              </AreaChart>
-            </ChartContainer>
-          </article>
-          <article className="flex flex-col rounded-[18px] bg-[#1b1b1b] p-5 sm:p-6">
-            <h2 className="text-base font-semibold">За 48 часов</h2>
-            <p className="mt-1 text-xs text-[#858580]">
-              Последние 48 часов · UTC
+        <section className="mb-6" aria-label="Использование токенов">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm font-medium text-[#a5a5a1]">
+              Период статистики
             </p>
-            <div className="mt-6 space-y-5">
-              <div className="flex items-end justify-between gap-3">
-                <span className="text-sm text-[#a5a5a1]">Запросы</span>
-                <span className="text-2xl font-semibold">
-                  {summary ? summary.requestCount.toLocaleString("ru-RU") : "—"}
-                </span>
-              </div>
-              <div className="h-px bg-white/[0.07]" />
-              <div className="flex items-end justify-between gap-3">
-                <span className="text-sm text-[#a5a5a1]">Средний расход</span>
-                <span className="text-xl font-semibold sm:text-2xl">
-                  {summary ? average.toLocaleString("ru-RU") : "—"}{" "}
-                  <span className="text-xs font-normal text-[#858580] sm:text-sm">
-                    токена / запрос
-                  </span>
-                </span>
-              </div>
-              <div className="h-px bg-white/[0.07]" />
-              <div className="flex items-end justify-between gap-3">
-                <span className="text-sm text-[#a5a5a1]">Расход средств</span>
-                <span className="text-2xl font-semibold">
-                  {summary ? rubles(summary.cost48h) : "—"}
-                </span>
-              </div>
+            <div
+              role="group"
+              className="flex max-w-full gap-1 overflow-x-auto rounded-xl bg-[#1b1b1b] p-1"
+              aria-label="Выберите период статистики"
+            >
+              {DASHBOARD_PERIOD_OPTIONS.map((period) => (
+                <button
+                  key={period.value}
+                  type="button"
+                  aria-pressed={selectedPeriod === period.value}
+                  onClick={() => setSelectedPeriod(period.value)}
+                  className={`h-11 shrink-0 rounded-lg px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] ${
+                    selectedPeriod === period.value
+                      ? "bg-[#ffe02e] text-[#171717]"
+                      : "text-[#a5a5a1] hover:bg-white/[0.06] hover:text-[#f3f2ee]"
+                  }`}
+                >
+                  {period.label}
+                </button>
+              ))}
             </div>
-          </article>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-[1.55fr_1fr]">
+            <article className="rounded-[18px] bg-[#1b1b1b] p-5 sm:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-semibold">Расход токенов</h2>
+                  <p className="mt-1 text-xs text-[#858580]">
+                    {selectedPeriod === "2d"
+                      ? "Почасовой расход · UTC"
+                      : selectedPeriod === "all"
+                        ? "Помесячный расход · UTC"
+                        : "Ежедневный расход · UTC"}
+                  </p>
+                </div>
+                <span className="rounded-full bg-[#ffe02e]/10 px-3 py-1.5 text-xs font-medium text-[#ffe02e]">
+                  {summary ? summary.tokens.toLocaleString("ru-RU") : "—"} токенов
+                </span>
+              </div>
+              <ChartContainer
+                config={chartConfig}
+                className="mt-5 h-48 w-full aspect-auto"
+                aria-label={`Расход токенов ${periodTitle}`}
+              >
+                <AreaChart
+                  accessibilityLayer
+                  data={usageData}
+                  margin={{ left: 4, right: 8, top: 8 }}
+                >
+                  <defs>
+                    <linearGradient id="fillTokens" x1="0" y1="0" x2="0" y2="1">
+                      <stop
+                        offset="0%"
+                        stopColor="var(--color-tokens)"
+                        stopOpacity={0.24}
+                      />
+                      <stop
+                        offset="100%"
+                        stopColor="var(--color-tokens)"
+                        stopOpacity={0.01}
+                      />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid
+                    vertical={false}
+                    stroke="#ffffff"
+                    strokeOpacity={0.08}
+                    strokeDasharray="3 4"
+                  />
+                  <XAxis
+                    dataKey="time"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={9}
+                    interval={selectedPeriod === "2d" ? 5 : "preserveStartEnd"}
+                    tick={{ fill: "#777875", fontSize: 10 }}
+                    tickFormatter={(value: string) => {
+                      const date = new Date(value);
+                      if (selectedPeriod === "2d") {
+                        return date.toLocaleTimeString("ru-RU", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          timeZone: "UTC",
+                        });
+                      }
+                      return date.toLocaleDateString(
+                        "ru-RU",
+                        selectedPeriod === "all"
+                          ? { month: "short", year: "2-digit", timeZone: "UTC" }
+                          : { day: "numeric", month: "short", timeZone: "UTC" },
+                      );
+                    }}
+                  />
+                  <ChartTooltip
+                    cursor={{ stroke: "#777875", strokeDasharray: "4 4" }}
+                    content={
+                      <ChartTooltipContent
+                        indicator="line"
+                        labelFormatter={(value) => {
+                          const date = new Date(String(value));
+                          if (Number.isNaN(date.getTime())) return String(value);
+
+                          if (selectedPeriod === "2d") {
+                            return `${date.toLocaleString("ru-RU", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              timeZone: "UTC",
+                            })} UTC`;
+                          }
+
+                          return date.toLocaleDateString(
+                            "ru-RU",
+                            selectedPeriod === "all"
+                              ? {
+                                  month: "long",
+                                  year: "numeric",
+                                  timeZone: "UTC",
+                                }
+                              : {
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                  timeZone: "UTC",
+                                },
+                          );
+                        }}
+                      />
+                    }
+                  />
+                  <Area
+                    dataKey="tokens"
+                    type="monotone"
+                    stroke="var(--color-tokens)"
+                    strokeWidth={2}
+                    fill="url(#fillTokens)"
+                    dot={false}
+                    activeDot={{
+                      r: 4,
+                      fill: "#ffe02e",
+                      stroke: "#1b1b1b",
+                      strokeWidth: 2,
+                    }}
+                  />
+                </AreaChart>
+              </ChartContainer>
+            </article>
+            <article className="flex flex-col rounded-[18px] bg-[#1b1b1b] p-5 sm:p-6">
+              <h2 className="text-base font-semibold">Токены {periodTitle}</h2>
+              <p className="mt-1 text-xs text-[#858580]">
+                {periodLabel} · UTC
+              </p>
+              <div className="mt-6 space-y-5">
+                <div className="flex items-end justify-between gap-3">
+                  <span className="text-sm text-[#a5a5a1]">Всего токенов</span>
+                  <span className="text-2xl font-semibold tabular-nums">
+                    {summary ? summary.tokens.toLocaleString("ru-RU") : "—"}
+                  </span>
+                </div>
+                <div className="h-px bg-white/[0.07]" />
+                <div className="flex items-end justify-between gap-3">
+                  <span className="text-sm text-[#a5a5a1]">Запросы</span>
+                  <span className="text-2xl font-semibold">
+                    {summary ? summary.requestCount.toLocaleString("ru-RU") : "—"}
+                  </span>
+                </div>
+                <div className="h-px bg-white/[0.07]" />
+                <div className="flex items-end justify-between gap-3">
+                  <span className="text-sm text-[#a5a5a1]">Средний расход</span>
+                  <span className="text-xl font-semibold sm:text-2xl">
+                    {summary ? average.toLocaleString("ru-RU") : "—"}{" "}
+                    <span className="text-xs font-normal text-[#858580] sm:text-sm">
+                      токена / запрос
+                    </span>
+                  </span>
+                </div>
+                <div className="h-px bg-white/[0.07]" />
+                <div className="flex items-end justify-between gap-3">
+                  <span className="text-sm text-[#a5a5a1]">Расход средств</span>
+                  <span className="text-2xl font-semibold">
+                    {summary ? rubles(summary.cost) : "—"}
+                  </span>
+                </div>
+              </div>
+            </article>
+          </div>
         </section>
 
-        <UsageDetails summary={summary} />
+        <UsageDetails summary={summary} periodLabel={periodLabel} />
         <section
           className="overflow-hidden rounded-[18px] bg-[#1b1b1b]"
           aria-labelledby="requests-title"
@@ -325,6 +420,7 @@ export default function Dashboard() {
             </table>
           </div>
         </section>
+        <CreditHistory summary={summary} />
       </div>
       <TopUpModal open={topUpOpen} onClose={() => setTopUpOpen(false)} />
     </main>

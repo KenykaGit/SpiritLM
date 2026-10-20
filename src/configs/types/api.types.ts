@@ -1,3 +1,7 @@
+import type { DASHBOARD_PERIOD_VALUES } from "@/configs/consts/dashboard.const";
+
+export type DashboardPeriod = (typeof DASHBOARD_PERIOD_VALUES)[number];
+
 export type ApiKeySummary = {
   id: string;
   name: string;
@@ -18,7 +22,7 @@ export type DashboardSummary = {
   reasoningTokens: number;
   requestCount: number;
   unknownUsageCount: number;
-  cost48h: string;
+  cost: string;
   usage: { time: string; tokens: number }[];
   models: { model: string; requests: number; tokens: number }[];
   credits: { id: string; amount: string; note: string; createdAt: string }[];
