@@ -7,7 +7,10 @@ export function Card({
 }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("min-w-0 rounded-[15px] border border-transparent bg-[#1b1b1b]", className)}
+      className={cn(
+        "min-w-0 rounded-2xl border border-transparent bg-spirit-surface",
+        className,
+      )}
       data-slot="card"
       {...props}
     />

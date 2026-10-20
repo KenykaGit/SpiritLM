@@ -4,21 +4,20 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex cursor-pointer items-center justify-center gap-2.5 whitespace-nowrap font-[inherit] no-underline transition-[background-color,border-color,color,transform] duration-200 active:scale-[0.96] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-[#ffe02e]",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap font-body no-underline transition duration-200 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spirit-accent",
   {
     variants: {
     variant: {
-      default:
-        "bg-[#ffe02e] !text-[#14130a] shadow-sm hover:-translate-y-px hover:bg-[#ffeb61] hover:!text-[#14130a]",
-      ghost: "bg-transparent text-[#d1d0ca] hover:bg-[#171715] hover:text-[#f3f2ee]",
+      default: "bg-spirit-accent !text-spirit-accent-ink shadow-sm hover:-translate-y-0.5 hover:bg-spirit-accent-soft hover:!text-spirit-accent-ink",
+      ghost: "bg-transparent text-spirit-button-text hover:bg-spirit-surface hover:text-spirit-text",
       outline:
-        "border border-[#42423d] bg-[#121210] text-[#d1d0ca] hover:border-[#ffe02e] hover:bg-[#1b1a13] hover:text-[#ffe02e]",
-      link: "min-h-[38px] rounded-none border-0 bg-transparent p-0 text-left text-[13px] font-semibold text-[#ffe02e] hover:text-[#fff09b]",
+        "border border-spirit-border-strong bg-spirit-section text-spirit-button-text hover:border-spirit-accent hover:bg-spirit-surface hover:text-spirit-accent",
+      link: "min-h-10 rounded-none border-0 bg-transparent p-0 text-left text-sm font-semibold text-spirit-accent hover:text-spirit-accent-soft",
     },
     size: {
-      default: "min-h-11 rounded-[9px] px-4 text-sm font-semibold",
-      sm: "min-h-[38px] rounded-[9px] px-[13px] text-xs font-semibold",
-      lg: "min-h-12 rounded-[10px] px-[18px] text-sm font-semibold",
+      default: "min-h-11 rounded-lg px-4 text-sm font-semibold",
+      sm: "min-h-10 rounded-lg px-3 text-xs font-semibold",
+      lg: "min-h-12 rounded-xl px-5 text-sm font-semibold",
       icon: "size-9 rounded-full p-0",
     },
     },

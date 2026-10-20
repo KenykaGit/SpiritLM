@@ -6,7 +6,7 @@ import { QuickStart } from "./_components/quick-start";
 
 export default function Home() {
   return (
-    <div className="landing-page" id="top">
+    <div className="mx-auto max-w-screen-2xl overflow-hidden" id="top">
       <Navbar />
       <main>
         <Header />
