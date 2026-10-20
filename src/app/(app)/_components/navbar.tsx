@@ -20,7 +20,7 @@ export function Navbar() {
 
       <nav className="flex items-center gap-2" aria-label="Основные действия">
         <Button asChild className="min-h-8 rounded-md px-3 text-xs" size="sm">
-          <Link href={PATHS.MODELS}>Перейти</Link>
+          <Link href={PATHS.DASHBOARD.ROOT}>Перейти</Link>
         </Button>
         <Show when="signed-out">
           <Button asChild className="min-h-8 rounded-md px-3 text-xs" variant="ghost" size="sm">
