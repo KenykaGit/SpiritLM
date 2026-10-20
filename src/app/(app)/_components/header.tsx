@@ -7,9 +7,9 @@ import { Icon } from "./icon";
 
 export function Header() {
   return (
-    <section className="mx-auto grid max-w-7xl gap-2 px-5 py-12 sm:px-7 lg:grid-cols-2 lg:items-center lg:px-10">
+    <section className="mx-auto grid max-w-5xl gap-6 px-5 py-12 sm:px-7 lg:grid-cols-2 lg:items-center lg:gap-8 lg:px-10 lg:py-16">
       <div className="relative z-10 max-w-xl">
-        <h1 className="mb-4 font-heading text-5xl font-bold leading-none tracking-tighter text-balance sm:text-6xl lg:mb-5 lg:text-7xl xl:text-8xl">
+        <h1 className="mb-4 font-heading text-5xl font-bold leading-none tracking-tighter text-balance sm:text-6xl lg:mb-5 lg:text-6xl">
           Одна точка входа
           <br />
           в мир ИИ.
@@ -25,9 +25,8 @@ export function Header() {
         </Button>
       </div>
 
-      <div className="relative grid min-h-80 place-items-center isolate sm:min-h-96 lg:min-h-0" aria-label="SpiritLM объединяет модели искусственного интеллекта">
-        <div className="absolute -z-10 aspect-square w-64 rotate-[-9deg] rounded-[43%] border border-spirit-mark-border bg-spirit-mark before:absolute before:inset-8 before:rounded-full before:border before:border-spirit-mark-inner before:content-[''] sm:w-72 lg:w-96" aria-hidden="true" />
-        <div className="relative h-80 w-full max-w-sm sm:h-96 lg:max-w-md">
+      <div className="relative grid min-h-96 place-items-center lg:min-h-0" aria-label="SpiritLM объединяет модели искусственного интеллекта">
+        <div className="relative h-96 w-full max-w-md sm:h-[28rem] sm:max-w-lg lg:h-[32rem]">
           <Image src={IMAGES.IMAGES.LANDING} alt="Маскот SpiritLM с символами ИИ" fill priority sizes="(max-width: 40rem) 90vw, 46vw" className="object-contain drop-shadow-2xl" />
         </div>
       </div>

@@ -6,7 +6,7 @@ import { Navbar } from "./_components/navbar";
 
 export default function Home() {
   return (
-    <div className="mx-auto max-w-screen-2xl overflow-hidden" id="top">
+    <div className="mx-auto overflow-hidden" id="top">
       <Navbar />
       <main>
         <Header />

@@ -4,11 +4,11 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap font-body no-underline transition duration-200 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spirit-accent",
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap font-body no-underline transition-[color,background-color,border-color,transform] duration-200 active:scale-95 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-spirit-accent",
   {
     variants: {
     variant: {
-      default: "bg-spirit-accent !text-spirit-accent-ink shadow-sm hover:-translate-y-0.5 hover:bg-spirit-accent-soft hover:!text-spirit-accent-ink",
+      default: "bg-spirit-accent !text-spirit-accent-ink shadow-sm hover:bg-[#ffcc36] hover:!text-spirit-accent-ink",
       ghost:
         "rounded-xl bg-spirit-surface text-spirit-button-text hover:bg-spirit-surface-hover hover:text-spirit-text",
       outline:

@@ -6,7 +6,7 @@ export const metadata: Metadata = {
     default: "SpiritLM",
   },
   description: "Подключайте ведущие языковые модели через единый API SpiritLM.",
-  icons: { icon: "/icon.png" },
+  icons: { icon: "/favicon.png" },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
