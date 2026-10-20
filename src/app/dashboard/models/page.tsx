@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { IconCheck, IconCopy, IconSearch } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
 import { MODEL_GROUPS } from "@/configs/consts/models.const";
 import { IMAGES } from "@/configs/paths/images.paths";
@@ -51,15 +52,12 @@ export default function DashboardModelsPage() {
             </div>
             <label className="relative block w-full sm:w-72">
               <span className="sr-only">Поиск моделей</span>
-              <svg
+              <IconSearch
                 aria-hidden="true"
-                viewBox="0 0 20 20"
-                fill="none"
-                className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#858580]"
-              >
-                <circle cx="8.7" cy="8.7" r="5.7" stroke="currentColor" strokeWidth="1.5" />
-                <path d="m13 13 4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+                size={16}
+                stroke={1.5}
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#858580]"
+              />
               <input
                 type="search"
                 value={query}
@@ -143,14 +141,9 @@ export default function DashboardModelsPage() {
                             className="inline-flex size-8 items-center justify-center rounded-lg text-[#999994] transition-colors hover:bg-white/[0.07] hover:text-[#ffe02e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
                           >
                             {copiedModelId === model.id ? (
-                              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="size-4">
-                                <path d="m4 10 4 4 8-8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                              </svg>
+                              <IconCheck aria-hidden="true" size={16} stroke={1.8} />
                             ) : (
-                              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="size-4">
-                                <rect x="7" y="7" width="9" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
-                                <path d="M13 7V4.5A1.5 1.5 0 0 0 11.5 3h-7A1.5 1.5 0 0 0 3 4.5v8A1.5 1.5 0 0 0 4.5 14H7" stroke="currentColor" strokeWidth="1.4" />
-                              </svg>
+                              <IconCopy aria-hidden="true" size={16} stroke={1.4} />
                             )}
                           </button>
                         </div>

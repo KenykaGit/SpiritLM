@@ -6,6 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: {
     default: "SpiritLM",
+    template: "%s | SpiritLM",
   },
   description: "Подключайте ведущие языковые модели через единый API SpiritLM.",
   icons: { icon: "/favicon.png" },
