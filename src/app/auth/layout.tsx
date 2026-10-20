@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function AuthLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <div className="min-h-screen min-h-[100svh] overflow-x-hidden bg-[#252525] px-5 text-[#f3f2ee]">
+    <div className="min-h-screen min-h-[100svh] overflow-x-hidden bg-[#111111] px-5 text-[#f3f2ee]">
       <section className="mx-auto flex min-h-screen min-h-[100svh] w-full max-w-[520px] flex-col items-center justify-center py-5 text-center">
         <Image
           src={IMAGES.ICON}

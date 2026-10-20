@@ -1,11 +1,20 @@
-import { SignUp } from "@clerk/nextjs";
+import { ClerkLoaded, ClerkLoading, SignUp } from "@clerk/nextjs";
+import { AuthSkeleton } from "@/app/auth/_components/auth-skeleton";
 
 export default function SignUpPage() {
   return (
     <main
-      className="flex w-full items-center justify-center [&_.cl-footerPages]:!hidden [&_a[href*='clerk.com']]:!hidden [&_[aria-label*='Clerk']]:!hidden [&_[alt*='Clerk']]:!hidden"
+      className="auth-clerk flex w-full items-center justify-center"
     >
-      <SignUp routing="path" path="/auth/sign-up" />
+      <ClerkLoading>
+        <AuthSkeleton mode="sign-up" />
+      </ClerkLoading>
+      <ClerkLoaded>
+        <SignUp
+          routing="path"
+          path="/auth/sign-up"
+        />
+      </ClerkLoaded>
     </main>
   );
 }

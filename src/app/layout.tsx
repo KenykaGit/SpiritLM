@@ -1,4 +1,5 @@
 import { ClerkProvider } from "@clerk/nextjs";
+import { ruRU } from "@clerk/localizations";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -15,6 +16,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="ru">
       <body className="min-h-screen bg-spirit-canvas font-body text-spirit-text antialiased selection:bg-spirit-accent selection:text-spirit-accent-ink">
         <ClerkProvider
+          localization={{
+            ...ruRU,
+            socialButtonsBlockButton: "{{provider}}",
+            socialButtonsBlockButtonManyInView: "{{provider}}",
+          }}
           signInUrl="/auth/sign-in"
           signUpUrl="/auth/sign-up"
           appearance={{
@@ -33,14 +39,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               colorDanger: "#ff7777",
               borderRadius: "12px",
               fontFamily: "Figtree, Arial, sans-serif",
-            },
-            elements: {
-              card: "!shadow-none",
-              cardBox: "!shadow-none",
-              socialButtonsBlockButton:
-                "!border !border-[#4a4a4a] !bg-[#353535] !text-[#f3f2ee] hover:!bg-[#424242]",
-              socialButtonsIconButton:
-                "!border !border-[#4a4a4a] !bg-[#353535] !text-[#f3f2ee] hover:!bg-[#424242]",
             },
             options: {
               unsafe_disableDevelopmentModeWarnings: true,
