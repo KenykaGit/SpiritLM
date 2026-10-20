@@ -1,6 +1,4 @@
-type AuthSkeletonProps = {
-  mode: "sign-in" | "sign-up";
-};
+import type { AuthSkeletonProps } from "@/configs/types/auth.types";
 
 export function AuthSkeleton({ mode }: AuthSkeletonProps) {
   const isSignUp = mode === "sign-up";

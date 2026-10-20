@@ -1,15 +1,5 @@
 import Image from "next/image";
-import { IMAGES } from "../../../configs/paths/images.paths";
-
-const AGENTS = [
-  { name: "Claude Code", image: IMAGES.AGENTS.CLAUDE_CODE },
-  { name: "Codex", image: IMAGES.AGENTS.CODEX },
-  { name: "Cursor", image: IMAGES.AGENTS.CURSOR, invert: true },
-  { name: "Hermes", image: IMAGES.AGENTS.HERMES, invert: true },
-  { name: "Kimi Code", image: IMAGES.AGENTS.KIMI_CODE },
-  { name: "OpenCode", image: IMAGES.AGENTS.OPEN_CODE, invert: true },
-  { name: "VS Code", image: IMAGES.AGENTS.VS_CODE },
-] as const;
+import { AGENTS } from "@/configs/consts/agents.const";
 
 export function Agents() {
   return (
@@ -20,13 +10,17 @@ export function Agents() {
             Поддерживаем все популярные агенты и среды
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-spirit-muted sm:text-base">
-            Подключайте SpiritLM к привычным инструментам и работайте с моделями через единый API.
+            Подключайте SpiritLM к привычным инструментам и работайте с моделями
+            через единый API.
           </p>
         </div>
 
         <ul className="mx-auto mt-10 flex max-w-5xl flex-wrap items-center justify-center gap-x-6 gap-y-6 sm:gap-x-9 lg:mt-12">
           {AGENTS.map((agent) => (
-            <li key={agent.name} className="flex min-w-20 flex-col items-center gap-2 text-center">
+            <li
+              key={agent.name}
+              className="flex min-w-20 flex-col items-center gap-2 text-center"
+            >
               <Image
                 src={agent.image}
                 alt=""
@@ -37,7 +31,9 @@ export function Agents() {
                   "invert" in agent && agent.invert ? "invert" : ""
                 }`}
               />
-              <span className="text-sm font-medium text-spirit-text">{agent.name}</span>
+              <span className="text-sm font-medium text-spirit-text">
+                {agent.name}
+              </span>
             </li>
           ))}
         </ul>

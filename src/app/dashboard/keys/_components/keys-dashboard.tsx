@@ -1,5 +1,7 @@
 "use client";
 
+import { PATHS } from "@/configs/paths/pages.paths";
+
 import {
   IconCheck,
   IconCopy,
@@ -14,7 +16,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { CreateApiKeyModal } from "@/components/modals/create-api-key-modal";
 import { TopUpModal } from "@/components/modals/top-up-modal";
 import { ModalShell } from "@/components/modals/modal-shell";
-import type { ApiKeySummary } from "@/configs/types/api.types";
+import type { ApiKeySummary, IssuedApiKey } from "@/configs/types/api.types";
 import { dashboardFetch } from "@/lib/dashboard-client";
 
 export function KeysDashboard() {
@@ -33,33 +35,53 @@ export function KeysDashboard() {
 
   useEffect(() => {
     const controller = new AbortController();
-    dashboardFetch<{ keys: ApiKeySummary[] }>("/api/dashboard/keys", { signal: controller.signal })
+    dashboardFetch<{ keys: ApiKeySummary[] }>(PATHS.API.DASHBOARD.KEYS, {
+      signal: controller.signal,
+    })
       .then((data) => setKeys(data.keys))
       .catch((failure: unknown) => {
-        if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : "Не удалось загрузить ключи");
+        if (!controller.signal.aborted)
+          setError(
+            failure instanceof Error
+              ? failure.message
+              : "Не удалось загрузить ключи",
+          );
       })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
     return () => controller.abort();
   }, []);
 
   async function createKey(name: string) {
-    await toast.promise((async () => {
-      const result = await dashboardFetch<{ id: string; name: string; prefix: string; createdAt: string; secret: string }>(
-        "/api/dashboard/keys", { method: "POST", body: JSON.stringify({ name }) },
-      );
-      setKeys((current) => [{
-        id: result.id,
-        name: result.name,
-        prefix: result.prefix,
-        createdAt: result.createdAt,
-        lastUsedAt: null,
-        requests: 0,
-        spent: "0",
-      }, ...current]);
-      setShowCreateForm(false);
-      setCopied(false);
-      setSecret(result.secret);
-    })(), { loading: "Создаём ключ…", success: "Ключ создан", error: (failure) => failure.message });
+    await toast.promise(
+      (async () => {
+        const result = await dashboardFetch<IssuedApiKey>(
+          PATHS.API.DASHBOARD.KEYS,
+          { method: "POST", body: JSON.stringify({ name }) },
+        );
+        setKeys((current) => [
+          {
+            id: result.id,
+            name: result.name,
+            prefix: result.prefix,
+            createdAt: result.createdAt,
+            lastUsedAt: null,
+            requests: 0,
+            spent: "0",
+          },
+          ...current,
+        ]);
+        setShowCreateForm(false);
+        setCopied(false);
+        setSecret(result.secret);
+      })(),
+      {
+        loading: "Создаём ключ…",
+        success: "Ключ создан",
+        error: (failure) => failure.message,
+      },
+    );
   }
 
   async function copySecret() {
@@ -83,35 +105,67 @@ export function KeysDashboard() {
     const name = nameDraft.trim();
     if (!name || pendingKey) return;
     setPendingKey(keyId);
-    void toast.promise((async () => {
-      await dashboardFetch(`/api/dashboard/keys/${keyId}`, { method: "PATCH", body: JSON.stringify({ name }) });
-      setKeys((current) => current.map((key) => key.id === keyId ? { ...key, name } : key));
-      setEditingKey(null);
-    })(), { loading: "Сохраняем…", success: "Название обновлено", error: (failure) => failure.message })
-      .catch(() => {}).finally(() => setPendingKey(null));
+    void toast
+      .promise(
+        (async () => {
+          await dashboardFetch(PATHS.API.DASHBOARD.KEY(keyId), {
+            method: "PATCH",
+            body: JSON.stringify({ name }),
+          });
+          setKeys((current) =>
+            current.map((key) => (key.id === keyId ? { ...key, name } : key)),
+          );
+          setEditingKey(null);
+        })(),
+        {
+          loading: "Сохраняем…",
+          success: "Название обновлено",
+          error: (failure) => failure.message,
+        },
+      )
+      .catch(() => {})
+      .finally(() => setPendingKey(null));
   }
 
   function deleteKey(key: ApiKeySummary) {
     if (pendingKey) return;
     setPendingKey(key.id);
-    void toast.promise((async () => {
-      await dashboardFetch(`/api/dashboard/keys/${key.id}`, { method: "DELETE" });
-      setKeys((current) => current.filter((item) => item.id !== key.id));
-    })(), { loading: "Отзываем ключ…", success: "Ключ отозван", error: (failure) => failure.message })
-      .catch(() => {}).finally(() => setPendingKey(null));
+    void toast
+      .promise(
+        (async () => {
+          await dashboardFetch(PATHS.API.DASHBOARD.KEY(key.id), {
+            method: "DELETE",
+          });
+          setKeys((current) => current.filter((item) => item.id !== key.id));
+        })(),
+        {
+          loading: "Отзываем ключ…",
+          success: "Ключ отозван",
+          error: (failure) => failure.message,
+        },
+      )
+      .catch(() => {})
+      .finally(() => setPendingKey(null));
   }
 
   return (
-    <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8" aria-labelledby="dashboard-page-title">
+    <main
+      className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8"
+      aria-labelledby="dashboard-page-title"
+    >
       <div className="mx-auto max-w-[1340px]">
         <section className="mb-6 rounded-[20px] border border-white/[0.04] bg-[#1b1b1b] p-5 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 id="dashboard-page-title" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h1
+                id="dashboard-page-title"
+                className="text-2xl font-semibold tracking-tight sm:text-3xl"
+              >
                 API-ключи
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-[#a5a5a1]">
-                Управляйте ключами и смотрите расходы по каждому. Секрет ключа показывается только один раз при создании.
+                Управляйте ключами и смотрите расходы по каждому. Секрет ключа
+                показывается только один раз при создании.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -133,29 +187,63 @@ export function KeysDashboard() {
             </div>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Metric label="API-ключи" value={loading || error ? "—" : String(keys.length)} detail="Текущий месяц · UTC" />
-            <Metric label="Списания за месяц" value={loading || error ? "—" : formatRubles(totalSpent)} detail="Текущий месяц · UTC" />
-            <Metric label="Запросы за месяц" value={loading || error ? "—" : totalRequests.toLocaleString("ru-RU")} detail="Текущий месяц · UTC" />
+            <Metric
+              label="API-ключи"
+              value={loading || error ? "—" : String(keys.length)}
+              detail="Текущий месяц · UTC"
+            />
+            <Metric
+              label="Списания за месяц"
+              value={loading || error ? "—" : formatRubles(totalSpent)}
+              detail="Текущий месяц · UTC"
+            />
+            <Metric
+              label="Запросы за месяц"
+              value={
+                loading || error ? "—" : totalRequests.toLocaleString("ru-RU")
+              }
+              detail="Текущий месяц · UTC"
+            />
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-[18px] bg-[#1b1b1b]" aria-labelledby="keys-title">
+        <section
+          className="overflow-hidden rounded-[18px] bg-[#1b1b1b]"
+          aria-labelledby="keys-title"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-5 sm:px-6">
             <div>
-              <h2 id="keys-title" className="text-base font-semibold">Мои ключи</h2>
-              <p className="mt-1 text-xs text-[#858580]">Расходы и запросы за текущий месяц</p>
+              <h2 id="keys-title" className="text-base font-semibold">
+                Мои ключи
+              </h2>
+              <p className="mt-1 text-xs text-[#858580]">
+                Расходы и запросы за текущий месяц
+              </p>
             </div>
             <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-[#a5a5a1]">
-              {keys.length} {keys.length === 1 ? "ключ" : keys.length > 1 && keys.length < 5 ? "ключа" : "ключей"}
+              {keys.length}{" "}
+              {keys.length === 1
+                ? "ключ"
+                : keys.length > 1 && keys.length < 5
+                  ? "ключа"
+                  : "ключей"}
             </span>
           </div>
 
           {loading || error ? (
-            <p className="px-5 py-8 text-sm text-[#a5a5a1]" role={error ? "alert" : "status"}>{error ?? "Загружаем ключи…"}</p>
+            <p
+              className="px-5 py-8 text-sm text-[#a5a5a1]"
+              role={error ? "alert" : "status"}
+            >
+              {error ?? "Загружаем ключи…"}
+            </p>
           ) : keys.length > 0 ? (
             <ul className="list-none p-0">
               {keys.map((key) => (
-                <li key={key.id} className="border-t border-white/[0.06] px-5 py-4 sm:px-6">
+                <li
+                  key={key.id}
+                  className="border-t border-white/[0.06] px-5 py-4 sm:px-6"
+                >
                   <div className="grid gap-4 lg:grid-cols-[minmax(220px,1.5fr)_minmax(230px,1fr)_minmax(190px,0.9fr)_auto] lg:items-center">
                     <div className="flex min-w-0 items-start gap-3">
                       <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#242424] text-[#bdbdb8]">
@@ -163,47 +251,86 @@ export function KeysDashboard() {
                       </span>
                       <div className="min-w-0 flex-1">
                         {editingKey === key.id ? (
-                          <form onSubmit={(event) => saveRename(event, key.id)} className="flex gap-2">
-                            <label className="sr-only" htmlFor={`rename-${key.id}`}>Новое имя ключа</label>
+                          <form
+                            onSubmit={(event) => saveRename(event, key.id)}
+                            className="flex gap-2"
+                          >
+                            <label
+                              className="sr-only"
+                              htmlFor={`rename-${key.id}`}
+                            >
+                              Новое имя ключа
+                            </label>
                             <input
                               id={`rename-${key.id}`}
                               autoFocus
                               required
                               maxLength={48}
                               value={nameDraft}
-                              onChange={(event) => setNameDraft(event.target.value)}
+                              onChange={(event) =>
+                                setNameDraft(event.target.value)
+                              }
                               className="h-9 min-w-0 flex-1 rounded-lg border border-[#3b3b39] bg-[#101010] px-3 text-sm text-[#f3f2ee] outline-none focus:border-[#ffe02e]/70 focus:ring-2 focus:ring-[#ffe02e]/20"
                             />
-                            <button type="submit" className="inline-flex size-9 items-center justify-center rounded-lg bg-[#ffe02e] text-[#171717] transition-colors hover:bg-[#ffcc36] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]" aria-label="Сохранить название">
+                            <button
+                              type="submit"
+                              className="inline-flex size-9 items-center justify-center rounded-lg bg-[#ffe02e] text-[#171717] transition-colors hover:bg-[#ffcc36] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
+                              aria-label="Сохранить название"
+                            >
                               <IconCheck aria-hidden="true" size={17} />
                             </button>
-                            <button type="button" onClick={() => setEditingKey(null)} className="inline-flex size-9 items-center justify-center rounded-lg text-[#999994] hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]" aria-label="Отменить переименование">
+                            <button
+                              type="button"
+                              onClick={() => setEditingKey(null)}
+                              className="inline-flex size-9 items-center justify-center rounded-lg text-[#999994] hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
+                              aria-label="Отменить переименование"
+                            >
                               <IconX aria-hidden="true" size={17} />
                             </button>
                           </form>
                         ) : (
                           <>
-                            <h3 className="truncate text-sm font-medium text-[#f3f2ee]">{key.name}</h3>
-                            <p className="mt-1 truncate font-mono text-[11px] text-[#777875]">{key.prefix}••••••••</p>
+                            <h3 className="truncate text-sm font-medium text-[#f3f2ee]">
+                              {key.name}
+                            </h3>
+                            <p className="mt-1 truncate font-mono text-[11px] text-[#777875]">
+                              {key.prefix}••••••••
+                            </p>
                           </>
                         )}
-                        <p className="mt-1 text-[11px] text-[#777875]">Создан {new Date(key.createdAt).toLocaleDateString("ru-RU")}</p>
+                        <p className="mt-1 text-[11px] text-[#777875]">
+                          Создан{" "}
+                          {new Date(key.createdAt).toLocaleDateString("ru-RU")}
+                        </p>
                       </div>
                     </div>
 
                     <dl className="grid grid-cols-2 gap-3 rounded-xl bg-[#242424]/70 px-3 py-2.5 lg:bg-transparent lg:px-0 lg:py-0">
                       <div>
-                        <dt className="text-[10px] uppercase tracking-wide text-[#777875]">Списания</dt>
-                        <dd className="mt-1 text-sm font-medium tabular-nums text-[#f3f2ee]">{formatRubles(Number(key.spent))}</dd>
+                        <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
+                          Списания
+                        </dt>
+                        <dd className="mt-1 text-sm font-medium tabular-nums text-[#f3f2ee]">
+                          {formatRubles(Number(key.spent))}
+                        </dd>
                       </div>
                       <div>
-                        <dt className="text-[10px] uppercase tracking-wide text-[#777875]">Запросы</dt>
-                        <dd className="mt-1 text-sm tabular-nums text-[#d0d0cb]">{key.requests.toLocaleString("ru-RU")}</dd>
+                        <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
+                          Запросы
+                        </dt>
+                        <dd className="mt-1 text-sm tabular-nums text-[#d0d0cb]">
+                          {key.requests.toLocaleString("ru-RU")}
+                        </dd>
                       </div>
                     </dl>
 
                     <p className="text-xs text-[#999994]">
-                      <span className="text-[#777875]">Последнее использование · </span>{key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString("ru-RU") : "Ещё не использовался"}
+                      <span className="text-[#777875]">
+                        Последнее использование ·{" "}
+                      </span>
+                      {key.lastUsedAt
+                        ? new Date(key.lastUsedAt).toLocaleString("ru-RU")
+                        : "Ещё не использовался"}
                     </p>
 
                     <div className="flex items-center gap-1 lg:justify-end">
@@ -235,7 +362,9 @@ export function KeysDashboard() {
           ) : (
             <div className="border-t border-white/[0.06] px-5 py-12 text-center sm:px-6">
               <p className="text-sm font-medium">Пока нет API-ключей</p>
-              <p className="mt-1 text-xs text-[#858580]">Создайте ключ, чтобы начать работу.</p>
+              <p className="mt-1 text-xs text-[#858580]">
+                Создайте ключ, чтобы начать работу.
+              </p>
             </div>
           )}
         </section>
@@ -249,7 +378,9 @@ export function KeysDashboard() {
         icon={<IconKey aria-hidden="true" size={19} />}
         onClose={() => setSecret(null)}
       >
-        <label htmlFor="new-api-secret" className="sr-only">Новый API-ключ</label>
+        <label htmlFor="new-api-secret" className="sr-only">
+          Новый API-ключ
+        </label>
         <input
           id="new-api-secret"
           readOnly
@@ -262,7 +393,11 @@ export function KeysDashboard() {
           onClick={() => void copySecret()}
           className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#ffe02e] px-4 py-2 text-sm font-semibold text-[#171717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
         >
-          {copied ? <IconCheck aria-hidden="true" size={16} /> : <IconCopy aria-hidden="true" size={16} />}
+          {copied ? (
+            <IconCheck aria-hidden="true" size={16} />
+          ) : (
+            <IconCopy aria-hidden="true" size={16} />
+          )}
           {copied ? "Скопировано" : "Скопировать"}
         </button>
       </ModalShell>
@@ -279,11 +414,21 @@ export function KeysDashboard() {
   );
 }
 
-function Metric({ label, value, detail }: { label: string; value: string; detail: string }) {
+function Metric({
+  label,
+  value,
+  detail,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+}) {
   return (
     <div className="rounded-[14px] bg-[#242424] px-4 py-4">
       <p className="text-xs text-[#999994]">{label}</p>
-      <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">{value}</p>
+      <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
+        {value}
+      </p>
       <p className="mt-1 text-[11px] text-[#777875]">{detail}</p>
     </div>
   );

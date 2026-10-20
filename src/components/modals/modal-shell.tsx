@@ -1,18 +1,10 @@
 "use client";
 
 import { IconX } from "@tabler/icons-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
-type ModalShellProps = {
-  open: boolean;
-  titleId: string;
-  title: string;
-  description: string;
-  icon: ReactNode;
-  onClose: () => void;
-  children: ReactNode;
-};
+import type { ModalShellProps } from "@/configs/types/modals.types";
 
 export function ModalShell({
   open,
@@ -32,23 +24,38 @@ export function ModalShell({
     const previousFocus = document.activeElement;
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const selector = 'button:not(:disabled), input:not(:disabled), a[href], select, textarea, [tabindex="0"]';
+    const selector =
+      'button:not(:disabled), input:not(:disabled), a[href], select, textarea, [tabindex="0"]';
     const frame = requestAnimationFrame(() => {
       const dialog = dialogRef.current;
-      (dialog?.querySelector<HTMLElement>("[autofocus]") ?? dialog?.querySelector<HTMLElement>(selector) ?? dialog)?.focus();
+      (
+        dialog?.querySelector<HTMLElement>("[autofocus]") ??
+        dialog?.querySelector<HTMLElement>(selector) ??
+        dialog
+      )?.focus();
     });
     function trapFocus(event: KeyboardEvent) {
       if (event.key !== "Tab") return;
-      const items = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(selector) ?? []);
+      const items = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>(selector) ?? [],
+      );
       const first = items[0];
       const last = items[items.length - 1];
       if (!first || !last) {
         event.preventDefault();
         dialogRef.current?.focus();
-      } else if (event.shiftKey && (document.activeElement === first || !dialogRef.current?.contains(document.activeElement))) {
+      } else if (
+        event.shiftKey &&
+        (document.activeElement === first ||
+          !dialogRef.current?.contains(document.activeElement))
+      ) {
         event.preventDefault();
         last.focus();
-      } else if (!event.shiftKey && (document.activeElement === last || !dialogRef.current?.contains(document.activeElement))) {
+      } else if (
+        !event.shiftKey &&
+        (document.activeElement === last ||
+          !dialogRef.current?.contains(document.activeElement))
+      ) {
         event.preventDefault();
         first.focus();
       }
@@ -121,7 +128,9 @@ export function ModalShell({
             <span className="mb-3 inline-flex size-9 items-center justify-center rounded-xl bg-[#ffe02e]/10 text-[#ffe02e]">
               {icon}
             </span>
-            <h2 id={titleId} className="text-lg font-semibold">{title}</h2>
+            <h2 id={titleId} className="text-lg font-semibold">
+              {title}
+            </h2>
             <p className="mt-1 text-sm text-[#999994]">{description}</p>
           </div>
           <Button

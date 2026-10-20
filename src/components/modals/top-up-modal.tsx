@@ -1,16 +1,12 @@
 "use client";
 
+import { SUGGESTED_TOP_UP_AMOUNTS } from "@/configs/consts/dashboard.const";
 import { IconWallet } from "@tabler/icons-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ModalShell } from "./modal-shell";
 
-type TopUpModalProps = {
-  open: boolean;
-  onClose: () => void;
-};
-
-const suggestedAmounts = [500, 1_000, 2_500, 5_000];
+import type { TopUpModalProps } from "@/configs/types/modals.types";
 
 export function TopUpModal({ open, onClose }: TopUpModalProps) {
   const [amount, setAmount] = useState("1000");
@@ -27,7 +23,7 @@ export function TopUpModal({ open, onClose }: TopUpModalProps) {
       <div className="mt-5">
         <p className="mb-2 text-xs font-medium text-[#c6c6c1]">Сумма, ₽</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {suggestedAmounts.map((suggestion) => (
+          {SUGGESTED_TOP_UP_AMOUNTS.map((suggestion) => (
             <Button
               key={suggestion}
               type="button"
@@ -45,7 +41,10 @@ export function TopUpModal({ open, onClose }: TopUpModalProps) {
             </Button>
           ))}
         </div>
-        <label htmlFor="top-up-amount" className="mb-2 mt-4 block text-xs font-medium text-[#c6c6c1]">
+        <label
+          htmlFor="top-up-amount"
+          className="mb-2 mt-4 block text-xs font-medium text-[#c6c6c1]"
+        >
           Или укажите другую сумму
         </label>
         <div className="relative">
@@ -60,10 +59,13 @@ export function TopUpModal({ open, onClose }: TopUpModalProps) {
             onChange={(event) => setAmount(event.target.value)}
             className="h-11 w-full rounded-xl border border-[#3b3b39] bg-[#101010] px-3 pr-10 text-sm text-[#f3f2ee] outline-none focus:border-[#ffe02e]/70 focus:ring-2 focus:ring-[#ffe02e]/20"
           />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#858580]">₽</span>
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#858580]">
+            ₽
+          </span>
         </div>
         <p className="mt-2 text-[11px] leading-5 text-[#777875]">
-          Онлайн-пополнение пока недоступно. Баланс начисляется вручную администратором.
+          Онлайн-пополнение пока недоступно. Баланс начисляется вручную
+          администратором.
         </p>
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button

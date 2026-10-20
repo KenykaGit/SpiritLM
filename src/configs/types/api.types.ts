@@ -32,3 +32,15 @@ export type DashboardSummary = {
     diagnostic: boolean;
   }[];
 };
+
+export type ApiErrorEnvelope = { error?: { message?: unknown } };
+
+export type IssuedApiKey = {
+  id: string;
+  name: string;
+  prefix: string;
+  createdAt: string;
+  secret: string;
+};
+
+export type ApiKeyRouteContext = { params: Promise<{ id: string }> };

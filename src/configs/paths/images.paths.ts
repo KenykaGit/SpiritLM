@@ -15,6 +15,12 @@ export const IMAGES = {
     XAI: "/ai/xai.webp",
     GROK: "/ai/grok.png",
   },
+  ICONS: {
+    HOME: "/icons/home.svg",
+    AI: "/icons/ai.svg",
+    DOCS: "/icons/docs.svg",
+    KEY: "/icons/key.svg",
+  },
   AGENTS: {
     CLAUDE_CODE: "/agents/claudecode.webp",
     CODEX: "/agents/codex.png",

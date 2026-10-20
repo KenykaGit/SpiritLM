@@ -1,6 +1,7 @@
 import "server-only";
 import { auth } from "@clerk/nextjs/server";
-import { db } from "./db";
+import { ensureUser as execute } from "@/actions/ensure-user";
+import { unwrapAction } from "./create-safe-action";
 import { ApiError } from "./api-error";
 
 export async function dashboardUser(request?: Request) {
@@ -12,13 +13,13 @@ export async function dashboardUser(request?: Request) {
   if (request && !["GET", "HEAD"].includes(request.method)) {
     const origin = request.headers.get("origin");
     if (!origin || origin !== new URL(request.url).origin) {
-      throw new ApiError(403, "invalid_origin", "Недопустимый источник запроса");
+      throw new ApiError(
+        403,
+        "invalid_origin",
+        "Недопустимый источник запроса",
+      );
     }
   }
 
-  return db.user.upsert({
-    where: { clerkId: session.userId },
-    create: { clerkId: session.userId },
-    update: {},
-  });
+  return unwrapAction(await execute({ clerkId: session.userId }));
 }

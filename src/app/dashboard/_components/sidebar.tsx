@@ -4,14 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { PATHS } from "@/configs/paths/pages.paths";
+import { DASHBOARD_NAV_ITEMS } from "@/configs/consts/navigation.const";
 
-const items = [
-  { label: "Главная", href: PATHS.DASHBOARD.ROOT, icon: "/icons/home.svg" },
-  { label: "Модели", href: PATHS.DASHBOARD.MODELS, icon: "/icons/ai.svg" },
-  { label: "Документация", href: PATHS.DASHBOARD.DOCS, icon: "/icons/docs.svg" },
-  { label: "API-Ключи", href: PATHS.DASHBOARD.KEYS, icon: "/icons/key.svg" },
-];
+const labels = {
+  HOME: "Главная",
+  MODELS: "Модели",
+  DOCS: "Документация",
+  KEYS: "API-Ключи",
+};
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
@@ -24,15 +24,18 @@ export function Sidebar() {
       } md:h-[calc(100dvh-3rem)] md:transition-[width] md:duration-200`}
       aria-label="Навигация дашборда"
     >
-      <nav className="grid grid-cols-4 gap-1 md:flex md:flex-col" aria-label="Разделы">
-        {items.map((item) => {
+      <nav
+        className="grid grid-cols-4 gap-1 md:flex md:flex-col"
+        aria-label="Разделы"
+      >
+        {DASHBOARD_NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
 
           return (
             <Link
               key={item.href}
               href={item.href}
-              title={collapsed ? item.label : undefined}
+              title={collapsed ? labels[item.id] : undefined}
               className={`flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1 py-1 font-normal transition-colors hover:bg-[#1b1b1b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] md:h-9 md:min-h-0 md:flex-row md:justify-start md:gap-2 md:px-2.5 md:py-0 ${
                 active ? "bg-[#242424]" : ""
               }`}
@@ -45,8 +48,14 @@ export function Sidebar() {
                 height={16}
                 className="size-4 shrink-0 brightness-0 invert"
               />
-              <span className="max-w-full truncate md:hidden">{item.label}</span>
-              {!collapsed && <span className="hidden truncate md:inline">{item.label}</span>}
+              <span className="max-w-full truncate md:hidden">
+                {labels[item.id]}
+              </span>
+              {!collapsed && (
+                <span className="hidden truncate md:inline">
+                  {labels[item.id]}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -59,7 +68,10 @@ export function Sidebar() {
         aria-label={collapsed ? "Развернуть меню" : "Свернуть меню"}
         aria-expanded={!collapsed}
       >
-        <span className="w-4 shrink-0 text-center text-lg leading-none" aria-hidden="true">
+        <span
+          className="w-4 shrink-0 text-center text-lg leading-none"
+          aria-hidden="true"
+        >
           {collapsed ? "›" : "‹"}
         </span>
         {!collapsed && <span>Свернуть</span>}

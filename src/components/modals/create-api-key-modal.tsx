@@ -5,13 +5,13 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { ModalShell } from "./modal-shell";
 
-type CreateApiKeyModalProps = {
-  open: boolean;
-  onClose: () => void;
-  onCreate: (name: string) => Promise<void> | void;
-};
+import type { CreateApiKeyModalProps } from "@/configs/types/modals.types";
 
-export function CreateApiKeyModal({ open, onClose, onCreate }: CreateApiKeyModalProps) {
+export function CreateApiKeyModal({
+  open,
+  onClose,
+  onCreate,
+}: CreateApiKeyModalProps) {
   const [name, setName] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +26,9 @@ export function CreateApiKeyModal({ open, onClose, onCreate }: CreateApiKeyModal
       await onCreate(trimmedName);
       setName("");
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Не удалось создать ключ");
+      setError(
+        failure instanceof Error ? failure.message : "Не удалось создать ключ",
+      );
     } finally {
       setPending(false);
     }
@@ -42,7 +44,10 @@ export function CreateApiKeyModal({ open, onClose, onCreate }: CreateApiKeyModal
       onClose={onClose}
     >
       <form onSubmit={submit} className="mt-5">
-        <label htmlFor="new-key-name" className="mb-2 block text-xs font-medium text-[#c6c6c1]">
+        <label
+          htmlFor="new-key-name"
+          className="mb-2 block text-xs font-medium text-[#c6c6c1]"
+        >
           Название ключа
         </label>
         <input
@@ -57,7 +62,15 @@ export function CreateApiKeyModal({ open, onClose, onCreate }: CreateApiKeyModal
           placeholder="Например, Backend production"
           className="h-11 w-full rounded-xl border border-[#3b3b39] bg-[#101010] px-3 text-sm text-[#f3f2ee] outline-none placeholder:text-[#777875] focus:border-[#ffe02e]/70 focus:ring-2 focus:ring-[#ffe02e]/20"
         />
-        {error && <p id="create-key-error" role="alert" className="mt-2 text-xs text-[#ffb3a9]">{error}</p>}
+        {error && (
+          <p
+            id="create-key-error"
+            role="alert"
+            className="mt-2 text-xs text-[#ffb3a9]"
+          >
+            {error}
+          </p>
+        )}
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
             type="button"
