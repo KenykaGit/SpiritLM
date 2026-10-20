@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 
 export default function DashboardDocsPage() {
   return (
-    <main className="min-w-0 flex-1 p-5 sm:p-8" aria-labelledby="dashboard-page-title">
+    <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8" aria-labelledby="dashboard-page-title">
       <div className="mx-auto max-w-[1100px]">
         <header className="mb-6 rounded-[20px] bg-[#1b1b1b] p-5 sm:p-7">
           <div className="mt-1 flex flex-wrap items-end justify-between gap-4">

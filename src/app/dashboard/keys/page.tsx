@@ -6,7 +6,7 @@ export const metadata: Metadata = {
 
 export default function DashboardKeysPage() {
   return (
-    <main className="min-w-0 flex-1 p-6" aria-labelledby="dashboard-page-title">
+    <main className="min-w-0 flex-1 p-4 sm:p-6" aria-labelledby="dashboard-page-title">
       <h1 id="dashboard-page-title" className="text-xl font-semibold">
         API-Ключи
       </h1>

@@ -39,7 +39,7 @@ export default function Dashboard() {
   const username = user?.username || user?.firstName || user?.primaryEmailAddress?.emailAddress?.split("@")[0] || "Пользователь";
 
   return (
-    <main className="min-w-0 flex-1 p-5 sm:p-8" aria-labelledby="dashboard-page-title">
+    <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8" aria-labelledby="dashboard-page-title">
       <div className="mx-auto max-w-[1340px]">
         <section className="mb-6 rounded-[20px] border border-white/[0.04] bg-[#1b1b1b] p-5 sm:p-6" aria-label="Сводка аккаунта">
           <div className="flex flex-wrap items-start justify-between gap-5">
@@ -117,7 +117,7 @@ export default function Dashboard() {
             <div className="mt-6 space-y-5">
               <div className="flex items-end justify-between gap-3"><span className="text-sm text-[#a5a5a1]">Запросы</span><span className="text-2xl font-semibold">246</span></div>
               <div className="h-px bg-white/[0.07]" />
-              <div className="flex items-end justify-between gap-3"><span className="text-sm text-[#a5a5a1]">Средний расход</span><span className="text-2xl font-semibold">522 <span className="text-sm font-normal text-[#858580]">токена / запрос</span></span></div>
+              <div className="flex items-end justify-between gap-3"><span className="text-sm text-[#a5a5a1]">Средний расход</span><span className="text-xl font-semibold sm:text-2xl">522 <span className="text-xs font-normal text-[#858580] sm:text-sm">токена / запрос</span></span></div>
               <div className="h-px bg-white/[0.07]" />
               <div className="flex items-end justify-between gap-3"><span className="text-sm text-[#a5a5a1]">Расход средств</span><span className="text-2xl font-semibold">₽ 42,18</span></div>
             </div>

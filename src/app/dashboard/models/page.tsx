@@ -38,12 +38,12 @@ export default function DashboardModelsPage() {
   const resultCount = groups.reduce((total, group) => total + group.models.length, 0);
 
   return (
-    <main className="min-w-0 flex-1 p-6 sm:p-8" aria-labelledby="dashboard-page-title">
+    <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8" aria-labelledby="dashboard-page-title">
       <div className="mx-auto max-w-[1340px]">
         <div className="mb-8 rounded-[20px] border border-white/[0.04] bg-[#1b1b1b] p-5 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 id="dashboard-page-title" className="text-3xl font-semibold tracking-tight">
+              <h1 id="dashboard-page-title" className="text-2xl font-semibold tracking-tight sm:text-3xl">
                 Каталог моделей
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-[#a5a5a1]">
