@@ -2,8 +2,7 @@
 
 import { useUser } from "@clerk/nextjs";
 import { IconPlus } from "@tabler/icons-react";
-import toast from "react-hot-toast";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import {
   ChartContainer,
@@ -12,37 +11,45 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 import { TopUpModal } from "@/components/modals/top-up-modal";
+import type { DashboardSummary } from "@/configs/types/api.types";
+import { dashboardFetch } from "@/lib/dashboard-client";
+import { UsageDetails } from "./_components/usage-details";
 
-const usage = [18, 24, 20, 34, 28, 42, 37, 53, 47, 58, 46, 65, 57, 72, 63, 78, 69, 84, 76, 92, 81, 96, 87, 100];
-const usageTotal = 128_450;
-const usageWeightTotal = usage.reduce((total, value) => total + value, 0);
-const usageData = usage.map((weight, index) => ({
-  time: `${Math.round(48 - index * 48 / (usage.length - 1))} ч. назад`,
-  tokens: Math.round(weight / usageWeightTotal * usageTotal),
-}));
-usageData[usageData.length - 1].tokens += usageTotal - usageData.reduce((total, point) => total + point.tokens, 0);
 const chartConfig = {
   tokens: {
     label: "Токены",
     color: "#ffe02e",
   },
 } satisfies ChartConfig;
-const requests = [
-  { model: "GPT-4o", id: "req_8f2a…c91d", time: "Сегодня, 14:32", tokens: "2 840", cost: "₽ 0,43", status: "Успешно" },
-  { model: "Claude 3.7 Sonnet", id: "req_2c71…a04b", time: "Сегодня, 14:18", tokens: "5 216", cost: "₽ 1,04", status: "Успешно" },
-  { model: "Gemini 2.5 Pro", id: "req_9d31…ef62", time: "Сегодня, 13:56", tokens: "1 905", cost: "₽ 0,38", status: "Успешно" },
-  { model: "DeepSeek V3", id: "req_4a8c…bb17", time: "Сегодня, 13:41", tokens: "3 472", cost: "₽ 0,17", status: "Успешно" },
-  { model: "GPT-4o", id: "req_761e…2f08", time: "Сегодня, 12:59", tokens: "8 104", cost: "₽ 1,22", status: "Успешно" },
-];
-
 export default function Dashboard() {
   const { user } = useUser();
   const [topUpOpen, setTopUpOpen] = useState(false);
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    async function load() {
+      try {
+        const data = await dashboardFetch<DashboardSummary>("/api/dashboard/summary", { signal: controller.signal });
+        setSummary(data);
+        setError(null);
+      } catch (failure) {
+        if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : "Не удалось загрузить статистику");
+      }
+    }
+    void load();
+    const interval = window.setInterval(() => { void load(); }, 60_000);
+    return () => { controller.abort(); window.clearInterval(interval); };
+  }, []);
+  const usageData = summary?.usage ?? [];
+  const requests = summary?.requests ?? [];
+  const average = summary?.requestCount ? Math.round(summary.tokens / summary.requestCount) : 0;
   const username = user?.username || user?.firstName || user?.primaryEmailAddress?.emailAddress?.split("@")[0] || "Пользователь";
 
   return (
     <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8" aria-labelledby="dashboard-page-title">
       <div className="mx-auto max-w-[1340px]">
+        {error && <p role="alert" className="mb-4 rounded-xl bg-[#1b1b1b] p-4 text-sm text-[#ffb3a9]">{error}</p>}
         <section className="mb-6 rounded-[20px] border border-white/[0.04] bg-[#1b1b1b] p-5 sm:p-6" aria-label="Сводка аккаунта">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div>
@@ -59,9 +66,9 @@ export default function Dashboard() {
             </button>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Metric label="Баланс" value="₽ 1 250,00" detail="Демонстрационные данные" />
-            <Metric label="Потрачено за всё время" value="₽ 384,72" detail="Демонстрационные данные" />
-            <Metric label="Токенов за 48 часов" value="128 450" detail="Демонстрационные данные" />
+            <Metric label="Баланс" value={summary ? rubles(summary.balance) : "—"} detail="Начисляется вручную" />
+            <Metric label="Потрачено за всё время" value={summary ? rubles(summary.spent) : "—"} detail="Фактические списания" />
+            <Metric label="Токенов за 48 часов" value={summary ? summary.tokens.toLocaleString("ru-RU") : "—"} detail={summary?.unknownUsageCount ? `Запросов без данных о расходе: ${summary.unknownUsageCount}` : "По данным ответов API"} />
           </div>
         </section>
 
@@ -70,9 +77,9 @@ export default function Dashboard() {
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h2 className="text-base font-semibold">Расход токенов</h2>
-                <p className="mt-1 text-xs text-[#858580]">Последние 48 часов · демонстрационные данные</p>
+                <p className="mt-1 text-xs text-[#858580]">Почасовой расход · UTC</p>
               </div>
-              <span className="rounded-full bg-[#ffe02e]/10 px-3 py-1.5 text-xs font-medium text-[#ffe02e]">128 450 токенов</span>
+              <span className="rounded-full bg-[#ffe02e]/10 px-3 py-1.5 text-xs font-medium text-[#ffe02e]">{summary ? summary.tokens.toLocaleString("ru-RU") : "—"} токенов</span>
             </div>
             <ChartContainer
               config={chartConfig}
@@ -94,7 +101,7 @@ export default function Dashboard() {
                   tickMargin={9}
                   interval={5}
                   tick={{ fill: "#777875", fontSize: 10 }}
-                  tickFormatter={(value) => value === "0 ч. назад" ? "Сейчас" : value.replace(" назад", "")}
+                  tickFormatter={(value: string) => new Date(value).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" })}
                 />
                 <ChartTooltip
                   cursor={{ stroke: "#777875", strokeDasharray: "4 4" }}
@@ -114,36 +121,72 @@ export default function Dashboard() {
           </article>
           <article className="flex flex-col rounded-[18px] bg-[#1b1b1b] p-5 sm:p-6">
             <h2 className="text-base font-semibold">За 48 часов</h2>
-            <p className="mt-1 text-xs text-[#858580]">Демонстрационные данные</p>
+            <p className="mt-1 text-xs text-[#858580]">Последние 48 часов · UTC</p>
             <div className="mt-6 space-y-5">
-              <div className="flex items-end justify-between gap-3"><span className="text-sm text-[#a5a5a1]">Запросы</span><span className="text-2xl font-semibold">246</span></div>
+              <div className="flex items-end justify-between gap-3"><span className="text-sm text-[#a5a5a1]">Запросы</span><span className="text-2xl font-semibold">{summary ? summary.requestCount.toLocaleString("ru-RU") : "—"}</span></div>
               <div className="h-px bg-white/[0.07]" />
-              <div className="flex items-end justify-between gap-3"><span className="text-sm text-[#a5a5a1]">Средний расход</span><span className="text-xl font-semibold sm:text-2xl">522 <span className="text-xs font-normal text-[#858580] sm:text-sm">токена / запрос</span></span></div>
+              <div className="flex items-end justify-between gap-3"><span className="text-sm text-[#a5a5a1]">Средний расход</span><span className="text-xl font-semibold sm:text-2xl">{summary ? average.toLocaleString("ru-RU") : "—"} <span className="text-xs font-normal text-[#858580] sm:text-sm">токена / запрос</span></span></div>
               <div className="h-px bg-white/[0.07]" />
-              <div className="flex items-end justify-between gap-3"><span className="text-sm text-[#a5a5a1]">Расход средств</span><span className="text-2xl font-semibold">₽ 42,18</span></div>
+              <div className="flex items-end justify-between gap-3"><span className="text-sm text-[#a5a5a1]">Расход средств</span><span className="text-2xl font-semibold">{summary ? rubles(summary.cost48h) : "—"}</span></div>
             </div>
           </article>
         </section>
 
+        <UsageDetails summary={summary} />
         <section className="overflow-hidden rounded-[18px] bg-[#1b1b1b]" aria-labelledby="requests-title">
           <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-5 sm:px-6">
             <div>
               <h2 id="requests-title" className="text-base font-semibold">Последние запросы</h2>
-              <p className="mt-1 text-xs text-[#858580]">Демонстрационные данные</p>
+              <p className="mt-1 text-xs text-[#858580]">Последние 20 запросов</p>
             </div>
-            <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-[#a5a5a1]">Последние 48 часов</span>
+            <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-[#a5a5a1]">История запросов</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[680px] border-collapse text-left text-sm">
-              <thead className="bg-white/[0.025] text-[11px] font-medium uppercase tracking-wide text-[#777875]"><tr><th className="px-5 py-3 sm:px-6">Модель</th><th className="px-4 py-3">ID запроса</th><th className="px-4 py-3">Время</th><th className="px-4 py-3 text-right">Токены</th><th className="px-4 py-3 text-right">Стоимость</th><th className="px-5 py-3 text-right sm:px-6">Статус</th></tr></thead>
-              <tbody>{requests.map((request) => <tr key={request.id} className="border-t border-white/[0.06]">
-                <td className="whitespace-nowrap px-5 py-4 font-medium text-[#f3f2ee] sm:px-6">{request.model}</td>
-                <td className="whitespace-nowrap px-4 py-4 font-mono text-xs text-[#858580]">{request.id}</td>
-                <td className="whitespace-nowrap px-4 py-4 text-xs text-[#a5a5a1]">{request.time}</td>
-                <td className="whitespace-nowrap px-4 py-4 text-right tabular-nums">{request.tokens}</td>
-                <td className="whitespace-nowrap px-4 py-4 text-right tabular-nums">{request.cost}</td>
-                <td className="whitespace-nowrap px-5 py-4 text-right sm:px-6"><span className="inline-flex items-center gap-1.5 text-xs text-[#9fc7a1]"><span className="size-1.5 rounded-full bg-[#82c985]" />{request.status}</span></td>
-              </tr>)}</tbody>
+              <thead className="bg-white/[0.025] text-[11px] font-medium uppercase tracking-wide text-[#777875]">
+                <tr>
+                  <th className="px-5 py-3 sm:px-6">Модель</th>
+                  <th className="px-4 py-3">ID запроса</th>
+                  <th className="px-4 py-3">Время</th>
+                  <th className="px-4 py-3 text-right">Токены</th>
+                  <th className="px-4 py-3 text-right">Списано</th>
+                  <th className="px-5 py-3 text-right sm:px-6">Статус</th>
+                </tr>
+              </thead>
+              <tbody>
+                {!requests.length && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-10 text-center text-[#858580]">
+                      {summary ? "Пока нет запросов" : error ? "Статистика недоступна" : "Загружаем статистику…"}
+                    </td>
+                  </tr>
+                )}
+                {requests.map((request) => (
+                  <tr key={request.id} className="border-t border-white/[0.06]">
+                    <td className="whitespace-nowrap px-5 py-4 font-medium text-[#f3f2ee] sm:px-6">
+                      {request.model}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-4 font-mono text-xs text-[#858580]">
+                      {request.id}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-4 text-xs text-[#a5a5a1]">
+                      {new Date(request.createdAt).toLocaleString("ru-RU")}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-4 text-right tabular-nums">
+                      {request.totalTokens === null ? "Нет данных" : request.totalTokens.toLocaleString("ru-RU")}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-4 text-right tabular-nums">
+                      {rubles(request.chargedCost)}
+                    </td>
+                    <td className="whitespace-nowrap px-5 py-4 text-right sm:px-6">
+                      <span className={`inline-flex items-center gap-1.5 text-xs ${request.status === "SUCCEEDED" ? "text-[#9fc7a1]" : "text-[#c5c5c0]"}`}>
+                        <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
+                        {statusLabel(request.status)}{request.diagnostic ? " · Тест" : ""}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         </section>
@@ -151,16 +194,6 @@ export default function Dashboard() {
       <TopUpModal
         open={topUpOpen}
         onClose={() => setTopUpOpen(false)}
-        onSubmit={(amount) => {
-          void toast.promise(
-            Promise.resolve().then(() => setTopUpOpen(false)),
-            {
-              loading: "Создаём заявку…",
-              success: `Демо-заявка на ₽ ${amount.toLocaleString("ru-RU")} создана`,
-              error: "Не удалось создать заявку",
-            },
-          );
-        }}
       />
     </main>
   );
@@ -174,4 +207,18 @@ function Metric({ label, value, detail }: { label: string; value: string; detail
       <p className="mt-1 text-[11px] text-[#777875]">{detail}</p>
     </div>
   );
+}
+
+function rubles(value: string) {
+  return `₽ ${Number(value).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+}
+
+function statusLabel(status: string) {
+  const labels: Record<string, string> = {
+    SUCCEEDED: "Успешно",
+    FAILED: "Ошибка",
+    INTERRUPTED: "Прерван",
+    RUNNING: "Выполняется",
+  };
+  return labels[status] ?? "Неизвестно";
 }

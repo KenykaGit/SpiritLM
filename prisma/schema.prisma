@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+  engineType = "client"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id          String        @id @default(cuid())
+  clerkId     String        @unique @db.VarChar(191)
+  balance     Decimal       @default(0) @db.Decimal(20, 8)
+  createdAt   DateTime      @default(now())
+  keys        ApiKey[]
+  requests    ApiRequest[]
+  entries     BalanceEntry[]
+}
+
+model ApiKey {
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  name        String       @db.VarChar(48)
+  hash        String       @unique @db.Char(64)
+  prefix      String       @db.VarChar(24)
+  createdAt   DateTime     @default(now())
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  requests    ApiRequest[]
+
+  @@index([userId, revokedAt])
+}
+
+model ApiRequest {
+  id                  String    @id @default(cuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id])
+  apiKeyId            String?
+  apiKey              ApiKey?   @relation(fields: [apiKeyId], references: [id])
+  model               String    @db.VarChar(191)
+  upstreamModel       String    @db.VarChar(191)
+  status              String    @db.VarChar(32)
+  streaming           Boolean
+  diagnostic          Boolean   @default(false)
+  httpStatus          Int?
+  inputTokens         Int?
+  outputTokens        Int?
+  cachedTokens        Int?
+  reasoningTokens     Int?
+  totalTokens         Int?
+  usageKnown          Boolean   @default(false)
+  estimatedCost       Decimal?  @db.Decimal(20, 8)
+  chargedCost         Decimal   @default(0) @db.Decimal(20, 8)
+  pricePerMillion     Decimal   @db.Decimal(20, 8)
+  createdAt           DateTime  @default(now())
+  finishedAt          DateTime?
+  durationMs          Int?
+
+  @@index([userId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@index([userId, status, createdAt])
+}
+
+model BalanceEntry {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  operationId  String    @unique @db.VarChar(191)
+  amount       Decimal   @db.Decimal(20, 8)
+  note         String    @db.VarChar(500)
+  createdAt    DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}

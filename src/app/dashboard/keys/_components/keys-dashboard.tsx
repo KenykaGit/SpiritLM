@@ -10,121 +10,70 @@ import {
   IconX,
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { CreateApiKeyModal } from "@/components/modals/create-api-key-modal";
 import { TopUpModal } from "@/components/modals/top-up-modal";
-
-type ApiKey = {
-  id: string;
-  name: string;
-  secret: string;
-  createdAt: string;
-  lastUsed: string;
-  requests: number;
-  spent: number;
-};
-
-const initialKeys: ApiKey[] = [
-  {
-    id: "key-prod",
-    name: "Production",
-    secret: "sk-spirit-demo-4f8c2a1d7b9e6f3a",
-    createdAt: "12 окт. 2026",
-    lastUsed: "2 мин. назад",
-    requests: 1284,
-    spent: 128.42,
-  },
-  {
-    id: "key-staging",
-    name: "Staging",
-    secret: "sk-spirit-demo-9a3d7c5e2b1f8a6d",
-    createdAt: "8 окт. 2026",
-    lastUsed: "Вчера, 19:04",
-    requests: 346,
-    spent: 42.18,
-  },
-  {
-    id: "key-local",
-    name: "Локальная разработка",
-    secret: "sk-spirit-demo-1c6e4b8a0d2f9c7e",
-    createdAt: "1 окт. 2026",
-    lastUsed: "5 дней назад",
-    requests: 28,
-    spent: 3.76,
-  },
-];
+import { ModalShell } from "@/components/modals/modal-shell";
+import type { ApiKeySummary } from "@/configs/types/api.types";
+import { dashboardFetch } from "@/lib/dashboard-client";
 
 export function KeysDashboard() {
-  const [keys, setKeys] = useState(initialKeys);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [keys, setKeys] = useState<ApiKeySummary[]>([]);
+  const [secret, setSecret] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [nameDraft, setNameDraft] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showTopUpForm, setShowTopUpForm] = useState(false);
-  const totalSpent = keys.reduce((total, key) => total + key.spent, 0);
+  const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const totalSpent = keys.reduce((total, key) => total + Number(key.spent), 0);
   const totalRequests = keys.reduce((total, key) => total + key.requests, 0);
 
-  async function copyKey(key: ApiKey) {
-    const copyPromise = Promise.resolve().then(() => {
-      if (!navigator.clipboard) {
-        throw new Error("Clipboard API is unavailable");
-      }
-      return navigator.clipboard.writeText(key.secret);
-    });
+  useEffect(() => {
+    const controller = new AbortController();
+    dashboardFetch<{ keys: ApiKeySummary[] }>("/api/dashboard/keys", { signal: controller.signal })
+      .then((data) => setKeys(data.keys))
+      .catch((failure: unknown) => {
+        if (!controller.signal.aborted) setError(failure instanceof Error ? failure.message : "Не удалось загрузить ключи");
+      })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, []);
 
+  async function createKey(name: string) {
+    await toast.promise((async () => {
+      const result = await dashboardFetch<{ id: string; name: string; prefix: string; createdAt: string; secret: string }>(
+        "/api/dashboard/keys", { method: "POST", body: JSON.stringify({ name }) },
+      );
+      setKeys((current) => [{
+        id: result.id,
+        name: result.name,
+        prefix: result.prefix,
+        createdAt: result.createdAt,
+        lastUsedAt: null,
+        requests: 0,
+        spent: "0",
+      }, ...current]);
+      setShowCreateForm(false);
+      setCopied(false);
+      setSecret(result.secret);
+    })(), { loading: "Создаём ключ…", success: "Ключ создан", error: (failure) => failure.message });
+  }
+
+  async function copySecret() {
+    if (!secret) return;
     try {
-      await toast.promise(copyPromise, {
-        loading: "Копируем ключ…",
-        success: `Ключ «${key.name}» скопирован`,
-        error: "Не удалось скопировать ключ",
-      });
-      setCopiedKey(key.id);
-      window.setTimeout(() => setCopiedKey(null), 1800);
+      await navigator.clipboard.writeText(secret);
+      setCopied(true);
+      toast.success("Ключ скопирован");
     } catch {
-      // The promise toast reports clipboard errors.
+      toast.error("Не удалось скопировать ключ. Выделите его вручную.");
     }
   }
 
-  function createKey(name: string) {
-    if (!name) return;
-
-    void toast.promise(
-      Promise.resolve().then(() => {
-        const suffix = Math.random().toString(36).slice(2, 18);
-        setKeys((current) => [
-          {
-            id: `key-${Date.now()}`,
-            name,
-            secret: `sk-spirit-demo-${suffix}`,
-            createdAt: "Только что",
-            lastUsed: "Ещё не использовался",
-            requests: 0,
-            spent: 0,
-          },
-          ...current,
-        ]);
-        setShowCreateForm(false);
-      }),
-      {
-        loading: "Создаём ключ…",
-        success: "Демо-ключ создан",
-        error: "Не удалось создать ключ",
-      },
-    );
-  }
-
-  function submitTopUp(amount: number) {
-    void toast.promise(
-      Promise.resolve().then(() => setShowTopUpForm(false)),
-      {
-        loading: "Создаём заявку…",
-        success: `Демо-заявка на ₽ ${amount.toLocaleString("ru-RU")} создана`,
-        error: "Не удалось создать заявку",
-      },
-    );
-  }
-
-  function beginRename(key: ApiKey) {
+  function beginRename(key: ApiKeySummary) {
     setEditingKey(key.id);
     setNameDraft(key.name);
   }
@@ -132,30 +81,24 @@ export function KeysDashboard() {
   function saveRename(event: FormEvent<HTMLFormElement>, keyId: string) {
     event.preventDefault();
     const name = nameDraft.trim();
-    if (!name) return;
-    void toast.promise(
-      Promise.resolve().then(() => {
-        setKeys((current) => current.map((key) => key.id === keyId ? { ...key, name } : key));
-        setEditingKey(null);
-        setNameDraft("");
-      }),
-      {
-        loading: "Сохраняем название…",
-        success: "Название ключа обновлено",
-        error: "Не удалось переименовать ключ",
-      },
-    );
+    if (!name || pendingKey) return;
+    setPendingKey(keyId);
+    void toast.promise((async () => {
+      await dashboardFetch(`/api/dashboard/keys/${keyId}`, { method: "PATCH", body: JSON.stringify({ name }) });
+      setKeys((current) => current.map((key) => key.id === keyId ? { ...key, name } : key));
+      setEditingKey(null);
+    })(), { loading: "Сохраняем…", success: "Название обновлено", error: (failure) => failure.message })
+      .catch(() => {}).finally(() => setPendingKey(null));
   }
 
-  function deleteKey(key: ApiKey) {
-    void toast.promise(
-      Promise.resolve().then(() => setKeys((current) => current.filter((item) => item.id !== key.id))),
-      {
-        loading: "Удаляем ключ…",
-        success: `Ключ «${key.name}» удалён`,
-        error: "Не удалось удалить ключ",
-      },
-    );
+  function deleteKey(key: ApiKeySummary) {
+    if (pendingKey) return;
+    setPendingKey(key.id);
+    void toast.promise((async () => {
+      await dashboardFetch(`/api/dashboard/keys/${key.id}`, { method: "DELETE" });
+      setKeys((current) => current.filter((item) => item.id !== key.id));
+    })(), { loading: "Отзываем ключ…", success: "Ключ отозван", error: (failure) => failure.message })
+      .catch(() => {}).finally(() => setPendingKey(null));
   }
 
   return (
@@ -168,7 +111,7 @@ export function KeysDashboard() {
                 API-ключи
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-[#a5a5a1]">
-                Управляйте ключами и смотрите расходы по каждому. Все данные демонстрационные.
+                Управляйте ключами и смотрите расходы по каждому. Секрет ключа показывается только один раз при создании.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -190,9 +133,9 @@ export function KeysDashboard() {
             </div>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Metric label="API-ключи" value={String(keys.length)} detail="Демонстрационные данные" />
-            <Metric label="Списания за месяц" value={formatRubles(totalSpent)} detail="Демонстрационные данные" />
-            <Metric label="Запросы за месяц" value={totalRequests.toLocaleString("ru-RU")} detail="Демонстрационные данные" />
+            <Metric label="API-ключи" value={loading || error ? "—" : String(keys.length)} detail="Текущий месяц · UTC" />
+            <Metric label="Списания за месяц" value={loading || error ? "—" : formatRubles(totalSpent)} detail="Текущий месяц · UTC" />
+            <Metric label="Запросы за месяц" value={loading || error ? "—" : totalRequests.toLocaleString("ru-RU")} detail="Текущий месяц · UTC" />
           </div>
         </section>
 
@@ -207,7 +150,9 @@ export function KeysDashboard() {
             </span>
           </div>
 
-          {keys.length > 0 ? (
+          {loading || error ? (
+            <p className="px-5 py-8 text-sm text-[#a5a5a1]" role={error ? "alert" : "status"}>{error ?? "Загружаем ключи…"}</p>
+          ) : keys.length > 0 ? (
             <ul className="list-none p-0">
               {keys.map((key) => (
                 <li key={key.id} className="border-t border-white/[0.06] px-5 py-4 sm:px-6">
@@ -239,17 +184,17 @@ export function KeysDashboard() {
                         ) : (
                           <>
                             <h3 className="truncate text-sm font-medium text-[#f3f2ee]">{key.name}</h3>
-                            <p className="mt-1 truncate font-mono text-[11px] text-[#777875]">{key.secret.slice(0, 15)}••••••••</p>
+                            <p className="mt-1 truncate font-mono text-[11px] text-[#777875]">{key.prefix}••••••••</p>
                           </>
                         )}
-                        <p className="mt-1 text-[11px] text-[#777875]">Создан {key.createdAt}</p>
+                        <p className="mt-1 text-[11px] text-[#777875]">Создан {new Date(key.createdAt).toLocaleDateString("ru-RU")}</p>
                       </div>
                     </div>
 
                     <dl className="grid grid-cols-2 gap-3 rounded-xl bg-[#242424]/70 px-3 py-2.5 lg:bg-transparent lg:px-0 lg:py-0">
                       <div>
                         <dt className="text-[10px] uppercase tracking-wide text-[#777875]">Списания</dt>
-                        <dd className="mt-1 text-sm font-medium tabular-nums text-[#f3f2ee]">{formatRubles(key.spent)}</dd>
+                        <dd className="mt-1 text-sm font-medium tabular-nums text-[#f3f2ee]">{formatRubles(Number(key.spent))}</dd>
                       </div>
                       <div>
                         <dt className="text-[10px] uppercase tracking-wide text-[#777875]">Запросы</dt>
@@ -258,21 +203,13 @@ export function KeysDashboard() {
                     </dl>
 
                     <p className="text-xs text-[#999994]">
-                      <span className="text-[#777875]">Последнее использование · </span>{key.lastUsed}
+                      <span className="text-[#777875]">Последнее использование · </span>{key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString("ru-RU") : "Ещё не использовался"}
                     </p>
 
                     <div className="flex items-center gap-1 lg:justify-end">
                       <button
                         type="button"
-                        onClick={() => void copyKey(key)}
-                        aria-label={copiedKey === key.id ? `Ключ ${key.name} скопирован` : `Скопировать ключ ${key.name}`}
-                        title={copiedKey === key.id ? "Скопировано" : "Скопировать"}
-                        className="inline-flex size-10 items-center justify-center rounded-lg text-[#999994] transition-colors hover:bg-white/[0.07] hover:text-[#ffe02e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
-                      >
-                        {copiedKey === key.id ? <IconCheck aria-hidden="true" size={17} /> : <IconCopy aria-hidden="true" size={17} />}
-                      </button>
-                      <button
-                        type="button"
+                        disabled={pendingKey !== null}
                         onClick={() => beginRename(key)}
                         aria-label={`Переименовать ключ ${key.name}`}
                         title="Переименовать"
@@ -282,6 +219,7 @@ export function KeysDashboard() {
                       </button>
                       <button
                         type="button"
+                        disabled={pendingKey !== null}
                         onClick={() => deleteKey(key)}
                         aria-label={`Удалить ключ ${key.name}`}
                         title="Удалить"
@@ -303,6 +241,31 @@ export function KeysDashboard() {
         </section>
       </div>
 
+      <ModalShell
+        open={secret !== null}
+        titleId="new-secret-title"
+        title="Сохраните API-ключ"
+        description="Он показывается один раз. После закрытия восстановить секрет нельзя — можно создать новый ключ."
+        icon={<IconKey aria-hidden="true" size={19} />}
+        onClose={() => setSecret(null)}
+      >
+        <label htmlFor="new-api-secret" className="sr-only">Новый API-ключ</label>
+        <input
+          id="new-api-secret"
+          readOnly
+          value={secret ?? ""}
+          onFocus={(event) => event.target.select()}
+          className="mt-5 h-12 w-full rounded-xl bg-[#101010] px-3 font-mono text-xs text-[#f3f2ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
+        />
+        <button
+          type="button"
+          onClick={() => void copySecret()}
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-[#ffe02e] px-4 py-2 text-sm font-semibold text-[#171717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
+        >
+          {copied ? <IconCheck aria-hidden="true" size={16} /> : <IconCopy aria-hidden="true" size={16} />}
+          {copied ? "Скопировано" : "Скопировать"}
+        </button>
+      </ModalShell>
       <CreateApiKeyModal
         open={showCreateForm}
         onClose={() => setShowCreateForm(false)}
@@ -311,7 +274,6 @@ export function KeysDashboard() {
       <TopUpModal
         open={showTopUpForm}
         onClose={() => setShowTopUpForm(false)}
-        onSubmit={submitTopUp}
       />
     </main>
   );

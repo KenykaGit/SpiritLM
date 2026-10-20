@@ -34,7 +34,7 @@ export function Agents() {
                 width={48}
                 height={48}
                 className={`size-9 object-contain sm:size-10 ${
-                  agent.invert ? "invert" : ""
+                  "invert" in agent && agent.invert ? "invert" : ""
                 }`}
               />
               <span className="text-sm font-medium text-spirit-text">{agent.name}</span>

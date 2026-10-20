@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { Navbar } from "./_components/navbar";
 import { Sidebar } from "./_components/sidebar";
+import { auth } from "@clerk/nextjs/server";
 
 export const metadata: Metadata = {
   title: "Главная",
 };
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  await auth.protect();
   return (
     <>
       <Navbar />

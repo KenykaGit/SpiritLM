@@ -1,7 +1,7 @@
 "use client";
 
 import { IconX } from "@tabler/icons-react";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
 type ModalShellProps = {
@@ -25,6 +25,42 @@ export function ModalShell({
 }: ModalShellProps) {
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(false);
+  const dialogRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!open || !mounted) return;
+    const previousFocus = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const selector = 'button:not(:disabled), input:not(:disabled), a[href], select, textarea, [tabindex="0"]';
+    const frame = requestAnimationFrame(() => {
+      const dialog = dialogRef.current;
+      (dialog?.querySelector<HTMLElement>("[autofocus]") ?? dialog?.querySelector<HTMLElement>(selector) ?? dialog)?.focus();
+    });
+    function trapFocus(event: KeyboardEvent) {
+      if (event.key !== "Tab") return;
+      const items = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(selector) ?? []);
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (!first || !last) {
+        event.preventDefault();
+        dialogRef.current?.focus();
+      } else if (event.shiftKey && (document.activeElement === first || !dialogRef.current?.contains(document.activeElement))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !dialogRef.current?.contains(document.activeElement))) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", trapFocus);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("keydown", trapFocus);
+      document.body.style.overflow = overflow;
+      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+    };
+  }, [open, mounted]);
 
   useEffect(() => {
     let frame = 0;
@@ -67,11 +103,14 @@ export function ModalShell({
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 transition-opacity duration-300 ease-out motion-reduce:duration-0 ${visible && open ? "opacity-100" : "pointer-events-none opacity-0"}`}
       role="presentation"
       aria-hidden={!open}
+      inert={!open}
       onMouseDown={(event) => {
         if (open && event.target === event.currentTarget) onClose();
       }}
     >
       <section
+        ref={dialogRef}
+        tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

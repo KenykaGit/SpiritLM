@@ -12,7 +12,7 @@ export function Catalog() {
             Выберите модель
           </h2>
           <p className="m-0 text-sm text-spirit-muted">
-            Один API для моделей разных провайдеров
+            Предварительные цены за 1 MTok
           </p>
         </div>
 

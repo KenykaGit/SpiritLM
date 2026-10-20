@@ -1,27 +1,19 @@
 "use client";
 
 import { IconWallet } from "@tabler/icons-react";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ModalShell } from "./modal-shell";
 
 type TopUpModalProps = {
   open: boolean;
   onClose: () => void;
-  onSubmit: (amount: number) => void;
 };
 
 const suggestedAmounts = [500, 1_000, 2_500, 5_000];
 
-export function TopUpModal({ open, onClose, onSubmit }: TopUpModalProps) {
+export function TopUpModal({ open, onClose }: TopUpModalProps) {
   const [amount, setAmount] = useState("1000");
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const value = Number(amount);
-    if (!Number.isFinite(value) || value < 100 || value > 100_000) return;
-    onSubmit(value);
-  }
 
   return (
     <ModalShell
@@ -32,7 +24,7 @@ export function TopUpModal({ open, onClose, onSubmit }: TopUpModalProps) {
       icon={<IconWallet aria-hidden="true" size={19} />}
       onClose={onClose}
     >
-      <form onSubmit={submit} className="mt-5">
+      <div className="mt-5">
         <p className="mb-2 text-xs font-medium text-[#c6c6c1]">Сумма, ₽</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {suggestedAmounts.map((suggestion) => (
@@ -71,7 +63,7 @@ export function TopUpModal({ open, onClose, onSubmit }: TopUpModalProps) {
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-[#858580]">₽</span>
         </div>
         <p className="mt-2 text-[11px] leading-5 text-[#777875]">
-          Демонстрационная форма: платежи пока не обрабатываются.
+          Онлайн-пополнение пока недоступно. Баланс начисляется вручную администратором.
         </p>
         <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button
@@ -84,14 +76,15 @@ export function TopUpModal({ open, onClose, onSubmit }: TopUpModalProps) {
             Отмена
           </Button>
           <Button
-            type="submit"
+            type="button"
+            disabled
             size="sm"
             className="rounded-lg bg-[#ffe02e] px-4 text-sm font-semibold text-[#171717] transition-colors hover:bg-[#ffcc36] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1b1b]"
           >
-            Создать заявку
+            Скоро
           </Button>
         </div>
-      </form>
+      </div>
     </ModalShell>
   );
 }

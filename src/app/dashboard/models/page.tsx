@@ -47,7 +47,7 @@ export default function DashboardModelsPage() {
                 Каталог моделей
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-[#a5a5a1]">
-                Выберите модель для запросов через SpiritLM. Цены указаны за 1 млн токенов
+                Выберите модель для запросов через SpiritLM. Цены предварительные, указаны за 1 млн токенов. Доступность проверяйте через GET /v1/models
               </p>
             </div>
             <label className="relative block w-full sm:w-72">
