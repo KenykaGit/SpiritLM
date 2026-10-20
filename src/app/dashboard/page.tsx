@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
-import { IconArrowRight, IconPlus } from "@tabler/icons-react";
+import { IconPlus } from "@tabler/icons-react";
+import toast from "react-hot-toast";
+import { useState } from "react";
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import {
   ChartContainer,
@@ -10,7 +11,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { LINKS } from "@/configs/paths/links.paths";
+import { TopUpModal } from "@/components/modals/top-up-modal";
 
 const usage = [18, 24, 20, 34, 28, 42, 37, 53, 47, 58, 46, 65, 57, 72, 63, 78, 69, 84, 76, 92, 81, 96, 87, 100];
 const usageTotal = 128_450;
@@ -36,6 +37,7 @@ const requests = [
 
 export default function Dashboard() {
   const { user } = useUser();
+  const [topUpOpen, setTopUpOpen] = useState(false);
   const username = user?.username || user?.firstName || user?.primaryEmailAddress?.emailAddress?.split("@")[0] || "Пользователь";
 
   return (
@@ -47,15 +49,14 @@ export default function Dashboard() {
               <p className="text-sm text-[#999994]">Главная</p>
               <h1 id="dashboard-page-title" className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">{username}</h1>
             </div>
-            <Link
-              href={`https://${LINKS.TELEGRAM}`}
-              target="_blank"
-              rel="noreferrer"
+            <button
+              type="button"
+              onClick={() => setTopUpOpen(true)}
               className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#ffe02e] px-4 text-sm font-semibold text-[#171717] transition-colors hover:bg-[#f1d326] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1b1b]"
             >
-              Пополнить
               <IconPlus aria-hidden="true" size={16} stroke={1.7} />
-            </Link>
+              Пополнить
+            </button>
           </div>
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Metric label="Баланс" value="₽ 1 250,00" detail="Демонстрационные данные" />
@@ -147,6 +148,20 @@ export default function Dashboard() {
           </div>
         </section>
       </div>
+      <TopUpModal
+        open={topUpOpen}
+        onClose={() => setTopUpOpen(false)}
+        onSubmit={(amount) => {
+          void toast.promise(
+            Promise.resolve().then(() => setTopUpOpen(false)),
+            {
+              loading: "Создаём заявку…",
+              success: `Демо-заявка на ₽ ${amount.toLocaleString("ru-RU")} создана`,
+              error: "Не удалось создать заявку",
+            },
+          );
+        }}
+      />
     </main>
   );
 }

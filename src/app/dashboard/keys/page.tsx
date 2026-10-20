@@ -1,15 +1,10 @@
 import type { Metadata } from "next";
+import { KeysDashboard } from "./_components/keys-dashboard";
 
 export const metadata: Metadata = {
-  title: "API-Ключи",
+  title: "API-ключи",
 };
 
 export default function DashboardKeysPage() {
-  return (
-    <main className="min-w-0 flex-1 p-4 sm:p-6" aria-labelledby="dashboard-page-title">
-      <h1 id="dashboard-page-title" className="text-xl font-semibold">
-        API-Ключи
-      </h1>
-    </main>
-  );
+  return <KeysDashboard />;
 }

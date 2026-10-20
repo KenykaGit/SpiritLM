@@ -1,6 +1,8 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { ruRU } from "@clerk/localizations";
 import type { Metadata } from "next";
+import { IconCircleCheckFilled, IconCircleXFilled, IconLoader2 } from "@tabler/icons-react";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ru">
+    <html lang="ru" style={{ scrollbarGutter: "stable" }}>
       <body className="min-h-screen bg-spirit-canvas font-body text-spirit-text antialiased selection:bg-spirit-accent selection:text-spirit-accent-ink">
         <ClerkProvider
           localization={{
@@ -47,6 +49,43 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           }}
         >
           {children}
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              duration: 3200,
+              style: {
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                borderRadius: "12px",
+                background: "#353535",
+                color: "#f3f2ee",
+              },
+              iconTheme: {
+                primary: "#ffe02e",
+                secondary: "#454545",
+              },
+              loading: {
+                icon: (
+                  <span className="flex size-8 items-center justify-center">
+                    <IconLoader2 aria-hidden="true" size={22} className="animate-spin text-[#ffe02e]" />
+                  </span>
+                ),
+              },
+              success: {
+                icon: (
+                  <span className="flex size-8 items-center justify-center">
+                    <IconCircleCheckFilled aria-hidden="true" size={22} className="text-[#ffe02e]" />
+                  </span>
+                ),
+              },
+              error: {
+                icon: (
+                  <span className="flex size-8 items-center justify-center">
+                    <IconCircleXFilled aria-hidden="true" size={22} className="text-[#ffe02e]" />
+                  </span>
+                ),
+              },
+            }}
+          />
         </ClerkProvider>
       </body>
     </html>
