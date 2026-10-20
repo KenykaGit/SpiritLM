@@ -4,7 +4,7 @@
 
 - `src/app/(app)/page.tsx` composes the public landing page.
 - `src/app/(app)/_components/` contains one focused component per landing page section: navigation, hero, model catalog, quick start, and footer.
-- `src/app/globals.css` contains the site-wide styles and responsive layouts.
+- `src/app/globals.css` contains only Tailwind imports and configuration; do not add page or component styles there.
 - `src/configs/` contains reusable configuration organized by purpose and page/category:
   - `consts/` contains constants in focused files such as `api.const.ts` and `models.const.ts`; do not collect unrelated values in a generic `spiritlm.consts.ts`.
   - `types/` contains focused shared data types, grouped by category such as `models.types.ts`.
@@ -22,6 +22,7 @@
 - Display model prices as sample values until the product owner confirms production rates. Keep this status documented next to the values in the configuration.
 - Use real destinations for links. For in-page actions, point to an existing section anchor; do not add links to routes that do not exist.
 - Preserve semantic HTML, descriptive image alt text, keyboard focus states, and responsive layouts.
+- Style pages and components with Tailwind utility classes or shadcn/ui. Do not add page/component selectors to `src/app/globals.css` or create custom `auth-*` styling classes.
 - Follow the existing SpiritLM visual system in `DESIGN.md` and reuse its brand assets from `public/`.
 
 ## Code style

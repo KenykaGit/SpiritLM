@@ -6,6 +6,7 @@ const config = {
       colors: {
         spirit: {
           canvas: "#080808",
+          login: "#252525",
           header: "#050505",
           section: "#101010",
           surface: "#1b1b1b",

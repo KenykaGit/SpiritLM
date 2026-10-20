@@ -1,2 +1,6 @@
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
+
+.cl-internal-560t1i, .cl-footerItem, .cl-headerSubtitle, .cl-logoBox, .cl-header{
+    display: none;
+}

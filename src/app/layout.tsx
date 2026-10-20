@@ -14,7 +14,39 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ru">
       <body className="min-h-screen bg-spirit-canvas font-body text-spirit-text antialiased selection:bg-spirit-accent selection:text-spirit-accent-ink">
-        <ClerkProvider signInUrl="/auth/sign-in" signUpUrl="/auth/sign-up">
+        <ClerkProvider
+          signInUrl="/auth/sign-in"
+          signUpUrl="/auth/sign-up"
+          appearance={{
+            variables: {
+              colorPrimary: "#ffffff",
+              colorBackground: "#202020",
+              colorForeground: "#f3f2ee",
+              colorPrimaryForeground: "#202020",
+              colorMutedForeground: "#a5a5a1",
+              colorMuted: "#383838",
+              colorInput: "#383838",
+              colorInputForeground: "#f3f2ee",
+              colorNeutral: "#a5a5a1",
+              colorBorder: "#424242",
+              colorRing: "#f3f2ee",
+              colorDanger: "#ff7777",
+              borderRadius: "12px",
+              fontFamily: "Figtree, Arial, sans-serif",
+            },
+            elements: {
+              card: "!shadow-none",
+              cardBox: "!shadow-none",
+              socialButtonsBlockButton:
+                "!border !border-[#4a4a4a] !bg-[#353535] !text-[#f3f2ee] hover:!bg-[#424242]",
+              socialButtonsIconButton:
+                "!border !border-[#4a4a4a] !bg-[#353535] !text-[#f3f2ee] hover:!bg-[#424242]",
+            },
+            options: {
+              unsafe_disableDevelopmentModeWarnings: true,
+            },
+          }}
+        >
           {children}
         </ClerkProvider>
       </body>
