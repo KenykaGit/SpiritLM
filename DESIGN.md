@@ -47,8 +47,10 @@ Use yellow sparingly for primary calls to action, active navigation, highlighted
 ## Surfaces and shape
 
 - Standard cards use a `15px` radius (`13px` on small screens), dark raised surfaces, and subtle borders only where needed.
-- Buttons and controls use approximately `8–10px` radii. Pills and avatars may be fully rounded.
-- Separate content primarily through background tone and spacing. Avoid bright outlines and heavy shadows; reserve deeper shadows for the raised workspace preview.
+- Buttons and controls use approximately `8–12px` radii. Pills and avatars may be fully rounded.
+- Ghost buttons use a dark filled surface that brightens subtly on hover. Do not add decorative borders or outlines to ghost buttons; retain the visible keyboard focus ring for accessibility.
+- Separate page sections with background tone and spacing. Do not draw divider lines or borders between landing page sections, including the header and footer.
+- Avoid bright outlines and heavy shadows; reserve deeper shadows for the raised workspace preview.
 
 ## Components
 
@@ -57,7 +59,7 @@ Use yellow sparingly for primary calls to action, active navigation, highlighted
 - **Model card:** provider badge and subtle external arrow above a model symbol, title, short description, then a bottom metadata row divided by a fine line. The featured card may use a slightly warmer surface.
 - **Tabs and search:** low-contrast controls on dark surfaces. Selected tabs use a warm dark tint with yellow text. On narrow screens, tabs scroll horizontally and the search field is hidden.
 - **Workspace preview:** treat as a compact product UI, using dense rows, restrained separators, small role chips, and a muted active-status indicator.
-- **Footer:** thin top border, logo, concise brand line, navigation, and copyright in quiet text.
+- **Footer:** logo, concise brand line, navigation, and copyright in quiet text, separated from content by spacing.
 
 ## Icons and imagery
 

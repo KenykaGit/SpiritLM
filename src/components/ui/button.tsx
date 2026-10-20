@@ -9,7 +9,8 @@ const buttonVariants = cva(
     variants: {
     variant: {
       default: "bg-spirit-accent !text-spirit-accent-ink shadow-sm hover:-translate-y-0.5 hover:bg-spirit-accent-soft hover:!text-spirit-accent-ink",
-      ghost: "bg-transparent text-spirit-button-text hover:bg-spirit-surface hover:text-spirit-text",
+      ghost:
+        "rounded-xl bg-spirit-surface text-spirit-button-text hover:bg-spirit-surface-hover hover:text-spirit-text",
       outline:
         "border border-spirit-border-strong bg-spirit-section text-spirit-button-text hover:border-spirit-accent hover:bg-spirit-surface hover:text-spirit-accent",
       link: "min-h-10 rounded-none border-0 bg-transparent p-0 text-left text-sm font-semibold text-spirit-accent hover:text-spirit-accent-soft",

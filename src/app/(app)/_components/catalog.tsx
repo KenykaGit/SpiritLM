@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 
 export function Catalog() {
   return (
-    <section className="border-t border-spirit-border-subtle" id="models">
+    <section id="models">
       <div className="mx-auto max-w-7xl px-5 py-14 sm:px-7 lg:px-10 lg:py-20">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
           <h2 className="font-heading text-4xl font-bold leading-tight tracking-tighter text-balance sm:text-5xl">
