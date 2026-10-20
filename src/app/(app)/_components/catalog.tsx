@@ -23,12 +23,14 @@ export function Catalog() {
             <section key={group.provider}>
               <div className="mb-4 flex items-center gap-3">
                 <Image
-                  src={group.provider === "anthropic" ? IMAGES.AI.CLAUDE : group.icon}
+                  src={group.provider === "anthropic" ? IMAGES.AI.ANTHROPIC : group.icon}
                   alt=""
                   width={30}
                   height={30}
                   aria-hidden="true"
-                  className="size-[30px] object-contain"
+                  className={`size-[30px] object-contain ${
+                    group.provider === "anthropic" ? "invert" : ""
+                  }`}
                 />
                 <h3 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
                   {group.name}

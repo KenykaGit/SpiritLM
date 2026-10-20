@@ -33,7 +33,7 @@ export default function DashboardDocsPage() {
             <div className="flex flex-wrap gap-2">
               <Link
                 href={PATHS.DASHBOARD.KEYS}
-                className="inline-flex h-10 items-center rounded-xl bg-[#ffe02e] px-4 text-sm font-semibold text-[#171717] transition-colors hover:bg-[#f1d326] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1b1b]"
+                className="inline-flex h-10 items-center rounded-xl bg-[#ffe02e] px-4 text-sm font-semibold text-[#171717] transition-colors hover:bg-[#ffcc36] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1b1b]"
               >
                 API-ключи
               </Link>

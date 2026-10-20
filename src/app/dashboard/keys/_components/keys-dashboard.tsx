@@ -182,7 +182,7 @@ export function KeysDashboard() {
               <button
                 type="button"
                 onClick={() => setShowCreateForm(true)}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#ffe02e] px-4 text-sm font-semibold text-[#171717] transition-[background-color,transform] duration-200 hover:bg-[#f1d326] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1b1b]"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#ffe02e] px-4 text-sm font-semibold text-[#171717] transition-[background-color,transform] duration-200 hover:bg-[#ffcc36] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1b1b]"
               >
                 <IconPlus aria-hidden="true" size={17} stroke={1.8} />
                 Создать ключ
@@ -229,7 +229,7 @@ export function KeysDashboard() {
                               onChange={(event) => setNameDraft(event.target.value)}
                               className="h-9 min-w-0 flex-1 rounded-lg border border-[#3b3b39] bg-[#101010] px-3 text-sm text-[#f3f2ee] outline-none focus:border-[#ffe02e]/70 focus:ring-2 focus:ring-[#ffe02e]/20"
                             />
-                            <button type="submit" className="inline-flex size-9 items-center justify-center rounded-lg bg-[#ffe02e] text-[#171717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]" aria-label="Сохранить название">
+                            <button type="submit" className="inline-flex size-9 items-center justify-center rounded-lg bg-[#ffe02e] text-[#171717] transition-colors hover:bg-[#ffcc36] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]" aria-label="Сохранить название">
                               <IconCheck aria-hidden="true" size={17} />
                             </button>
                             <button type="button" onClick={() => setEditingKey(null)} className="inline-flex size-9 items-center justify-center rounded-lg text-[#999994] hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]" aria-label="Отменить переименование">

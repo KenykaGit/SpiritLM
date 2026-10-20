@@ -58,7 +58,7 @@ export function CreateApiKeyModal({ open, onClose, onCreate }: CreateApiKeyModal
           <Button
             type="submit"
             size="sm"
-            className="rounded-lg bg-[#ffe02e] px-4 text-sm font-semibold text-[#171717] hover:bg-[#f1d326] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1b1b]"
+            className="rounded-lg bg-[#ffe02e] px-4 text-sm font-semibold text-[#171717] transition-colors hover:bg-[#ffcc36] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1b1b]"
           >
             <IconPlus aria-hidden="true" size={16} />
             Создать ключ

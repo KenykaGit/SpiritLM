@@ -75,7 +75,7 @@ export default function DashboardModelsPage() {
               onClick={() => setFrontierOnly(false)}
               className={`rounded-full px-3.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] ${
                 !frontierOnly
-                  ? "bg-[#ffe02e] font-medium text-[#171717]"
+                  ? "bg-[#ffe02e] font-medium text-[#171717] hover:bg-[#ffcc36]"
                   : "bg-[#1b1b1b] text-[#b8b8b3] hover:bg-[#30302e] hover:text-white"
               }`}
             >
@@ -87,7 +87,7 @@ export default function DashboardModelsPage() {
               onClick={() => setFrontierOnly(true)}
               className={`rounded-full px-3.5 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] ${
                 frontierOnly
-                  ? "bg-[#ffe02e] font-medium text-[#171717]"
+                  ? "bg-[#ffe02e] font-medium text-[#171717] hover:bg-[#ffcc36]"
                   : "bg-[#1b1b1b] text-[#b8b8b3] hover:bg-[#30302e] hover:text-white"
               }`}
             >
