@@ -177,7 +177,7 @@ export default function DashboardModelsPage() {
                           )}
                         </div>
                         <div className="mt-auto flex items-end justify-between gap-3 pt-5">
-                          <span className="text-xs text-[#999994]">Цена за 1 млн токенов</span>
+                          <span className="text-xs text-[#999994]">Цена за 1 MTok</span>
                           <span className="whitespace-nowrap text-sm font-semibold text-[#f3f2ee]">
                             {model.pricePerMillionTokens}
                           </span>
