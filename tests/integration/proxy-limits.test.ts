@@ -101,6 +101,7 @@ test("concurrent admission never exceeds the running request limit", async () =>
       upstreamModel: "deepseek-v4-flash",
       streaming: true,
       price: "0.90",
+      reservation: "0",
     };
     assert.ok((await beginApiRequest(input)).data);
     const results = await Promise.all([

@@ -5,7 +5,6 @@ export const InputSchema = z.object({
   status: z.enum(FINAL_REQUEST_STATUSES),
   httpStatus: z.number().int().optional(),
   durationMs: z.number().nonnegative(),
-  estimatedCost: z.string().nullable(),
   usage: z
     .object({
       inputTokens: z.number().int().nonnegative(),

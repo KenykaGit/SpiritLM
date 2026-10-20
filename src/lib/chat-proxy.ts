@@ -138,6 +138,35 @@ export function validateModelTokenLimit(
   }
 }
 
+function reservationForRequest(
+  body: Record<string, unknown>,
+  maxOutputTokens: number | undefined,
+  pricePerMillion: string,
+): string {
+  const requestedOutputTokens =
+    body.max_tokens ?? body.max_completion_tokens;
+  const outputTokens =
+    typeof requestedOutputTokens === "number"
+      ? requestedOutputTokens
+      : maxOutputTokens;
+  if (outputTokens === undefined) {
+    throw new ApiError(
+      400,
+      "max_tokens_required",
+      "Укажите max_tokens: лимит модели неизвестен для расчёта резерва",
+    );
+  }
+
+  const serializedBytes = Buffer.byteLength(JSON.stringify(body), "utf8");
+  const messageCount = Array.isArray(body.messages) ? body.messages.length : 0;
+  const inputTokenReserve = serializedBytes + messageCount * 64 + 128;
+  return new Prisma.Decimal(pricePerMillion)
+    .mul(inputTokenReserve + outputTokens)
+    .div(1_000_000)
+    .toDecimalPlaces(8, Prisma.Decimal.ROUND_CEIL)
+    .toFixed();
+}
+
 export async function proxyChat(
   body: Record<string, unknown>,
   context: ProxyContext,
@@ -145,6 +174,9 @@ export async function proxyChat(
   validateChat(body);
   const model = await resolveModel(body.model as string);
   validateModelTokenLimit(body, model.maxOutputTokens);
+  const reservation = context.diagnostic
+    ? "0"
+    : reservationForRequest(body, model.maxOutputTokens, model.price.toFixed());
   const headers = upstreamHeaders();
   const startedAt = Date.now();
   const record = unwrapAction(
@@ -156,6 +188,7 @@ export async function proxyChat(
       upstreamModel: model.upstreamId,
       streaming: body.stream === true,
       price: model.price.toFixed(),
+      reservation,
     }),
   );
 
@@ -175,13 +208,6 @@ export async function proxyChat(
         httpStatus,
         durationMs: Date.now() - startedAt,
         usage,
-        estimatedCost: usage
-          ? model.price
-              .mul(usage.totalTokens)
-              .div(1_000_000)
-              .toDecimalPlaces(8, Prisma.Decimal.ROUND_HALF_UP)
-              .toFixed()
-          : null,
       }),
     );
   };

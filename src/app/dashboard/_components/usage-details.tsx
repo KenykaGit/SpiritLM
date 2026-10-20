@@ -97,7 +97,7 @@ export function CreditHistory({
       aria-labelledby="credits-title"
     >
       <h2 id="credits-title" className="text-base font-semibold">
-        История начислений
+        Операции баланса
       </h2>
       <p className="mt-1 text-xs text-[#858580]">Последние 20 операций</p>
       {!summary && loading ? (
@@ -116,7 +116,7 @@ export function CreditHistory({
         <p className="mt-6 text-sm text-[#858580]">Недоступно</p>
       ) : !summary.credits.length ? (
         <p className="mt-6 text-sm text-[#858580]">
-          Начислений пока нет
+          Операций пока нет
         </p>
       ) : (
         <ul className="mt-4 divide-y divide-white/[0.06]">
@@ -134,9 +134,9 @@ export function CreditHistory({
                 </p>
               </div>
               <span className="shrink-0 text-sm tabular-nums text-[#ffe02e]">
-                +₽{" "}
-                {Number(item.amount).toLocaleString("ru-RU", {
-                  maximumFractionDigits: 4,
+                {Number(item.amount) >= 0 ? "+" : "−"}₽{" "}
+                {Math.abs(Number(item.amount)).toLocaleString("ru-RU", {
+                  maximumFractionDigits: 8,
                 })}
               </span>
             </li>

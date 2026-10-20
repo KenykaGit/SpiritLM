@@ -7,4 +7,5 @@ export const InputSchema = z.object({
   upstreamModel: z.string().min(1),
   streaming: z.boolean(),
   price: z.string(),
+  reservation: z.string().regex(/^\d+(?:\.\d{1,8})?$/),
 });

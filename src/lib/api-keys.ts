@@ -6,7 +6,7 @@ import { ApiError } from "./api-error";
 
 export async function authenticateApiKey(request: Request) {
   const header = request.headers.get("authorization");
-  const secret = header?.match(/^Bearer (sk-spirit-[A-Za-z0-9_-]{43})$/i)?.[1];
+  const secret = header?.match(/^Bearer (sk-spiritlm-[A-Za-z0-9_-]{43})$/i)?.[1];
   if (!secret)
     throw new ApiError(401, "invalid_api_key", "Неверный API-ключ SpiritLM");
 

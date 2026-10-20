@@ -125,13 +125,13 @@ export default function Dashboard() {
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Metric
               label="Баланс"
-              value={summary ? rubles(summary.balance) : undefined}
+              value={summary ? rubles(summary.balance, 2) : undefined}
               loading={!summary && !error}
               detail="Начисляется вручную"
             />
             <Metric
               label="Потрачено за всё время"
-              value={summary ? rubles(summary.spent) : undefined}
+              value={summary ? rubles(summary.spent, 2) : undefined}
               loading={!summary && !error}
               detail="Фактические списания"
             />
@@ -340,7 +340,7 @@ export default function Dashboard() {
                 <div className="flex items-end justify-between gap-3">
                   <span className="text-sm text-[#a5a5a1]">Расход средств</span>
                   <span className="text-2xl font-semibold">
-                    {summary ? rubles(summary.cost) : error ? "Недоступно" : <Skeleton className="h-7 w-24" />}
+                    {summary ? rubles(summary.cost, 2) : error ? "Недоступно" : <Skeleton className="h-7 w-24" />}
                   </span>
                 </div>
               </div>
@@ -486,8 +486,11 @@ function Metric({
   );
 }
 
-function rubles(value: string) {
-  return `₽ ${Number(value).toLocaleString("ru-RU", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
+function rubles(value: string, maximumFractionDigits = 8) {
+  return `₽ ${Number(value).toLocaleString("ru-RU", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits,
+  })}`;
 }
 
 function statusLabel(status: string) {

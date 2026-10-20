@@ -1,6 +1,7 @@
 import { http } from "./http-client";
 import { Prisma } from "@prisma/client";
 import { MODEL_GROUPS } from "@/configs/consts/models.const";
+import type { Model } from "@/configs/types/models.types";
 import {
   CHEAPVIBE_BASE_URL,
   CATALOG_TIMEOUT_MS,
@@ -22,6 +23,19 @@ function outputLimit(model: UpstreamModel): number | undefined {
       return value;
     }
   }
+}
+
+function cheapvibeModelAlias(id: string): string {
+  const separator = id.indexOf("/");
+  return separator === -1 ? id : id.slice(separator + 1);
+}
+
+function modelPrice(model: Model): Prisma.Decimal {
+  return new Prisma.Decimal(
+    model.pricePerMillionTokens
+      .replace(/[^\d,.]/g, "")
+      .replace(",", "."),
+  );
 }
 
 export function upstreamHeaders() {
@@ -108,9 +122,14 @@ export async function availableModels() {
 
   return MODEL_GROUPS.flatMap((group) =>
     group.models.flatMap((model) => {
-      const upstreamId = available.has(model.id)
-        ? model.id
-        : model.id.split("/").slice(1).join("/");
+      // CheapVibeCode exposes bare model IDs. Prefer those aliases even if
+      // its catalog also happens to include a provider-prefixed ID.
+      const alias = cheapvibeModelAlias(model.id);
+      const upstreamId = available.has(alias)
+        ? alias
+        : available.has(model.id)
+          ? model.id
+          : alias;
       if (!available.has(upstreamId)) return [];
       return [
         {
@@ -118,12 +137,8 @@ export async function availableModels() {
           name: model.name,
           upstreamId,
           maxOutputTokens: available.get(upstreamId)?.maxOutputTokens,
-          // These values are sample retail prices, never confirmed procurement costs.
-          price: new Prisma.Decimal(
-            model.pricePerMillionTokens
-              .replace(/[^\d,.]/g, "")
-              .replace(",", "."),
-          ),
+          // Customer tariff per million tokens.
+          price: modelPrice(model),
         },
       ];
     }),
@@ -131,14 +146,31 @@ export async function availableModels() {
 }
 
 export async function resolveModel(id: string) {
-  const model = (await availableModels()).find(
-    (item) => item.id === id || item.upstreamId === id,
+  const availableModel = (await availableModels()).find(
+    (item) =>
+      item.id === id ||
+      item.upstreamId === id ||
+      (!id.includes("/") && cheapvibeModelAlias(item.id) === id),
   );
-  if (!model)
+  if (availableModel) return availableModel;
+
+  const configuredModel = MODEL_GROUPS.flatMap((group) => group.models).find(
+    (model) =>
+      model.id === id ||
+      (!id.includes("/") && cheapvibeModelAlias(model.id) === id),
+  );
+  if (!configuredModel)
     throw new ApiError(
       400,
       "model_not_found",
       "Модель отсутствует в доступном каталоге SpiritLM",
     );
-  return model;
+
+  return {
+    id: configuredModel.id,
+    name: configuredModel.name,
+    upstreamId: cheapvibeModelAlias(configuredModel.id),
+    maxOutputTokens: undefined,
+    price: modelPrice(configuredModel),
+  };
 }

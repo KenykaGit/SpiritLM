@@ -1,7 +1,7 @@
 import { IMAGES } from "../paths/images.paths";
 import type { ModelGroup } from "../types/models.types";
 
-// Sample customer prices from spiritlm-pricing.md, in ₽ per 1 million tokens.
+// Confirmed customer tariffs, in ₽ per 1 million tokens.
 export const MODEL_GROUPS: ModelGroup[] = [
   {
     provider: "openai",
