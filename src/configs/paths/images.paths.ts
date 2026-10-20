@@ -6,11 +6,14 @@ export const IMAGES = {
   },
   AI: {
     OPENAI: "/ai/gpt.png",
+    LUNA: "/icons/luna-cropped.png",
     ANTHROPIC: "/ai/antropic.webp",
     CLAUDE: "/ai/claude.svg",
     DEEPSEEK: "/ai/deepseek.webp",
     GOOGLE: "/ai/google.webp",
+    GEMINI: "/ai/gemini.webp",
     XAI: "/ai/xai.webp",
+    GROK: "/ai/grok.png",
   },
   AGENTS: {
     CLAUDE_CODE: "/agents/claudecode.webp",

@@ -1,9 +1,10 @@
-export type ModelProvider = "openai" | "anthropic";
+export type ModelProvider = "openai" | "anthropic" | "deepseek" | "google" | "xai";
 
 export type Model = {
   id: string;
   name: string;
   pricePerMillionTokens: string;
+  frontier?: boolean;
 };
 
 export type ModelGroup = {

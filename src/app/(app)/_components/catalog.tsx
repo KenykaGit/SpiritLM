@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { MODEL_GROUPS } from "../../../configs/consts/models.const";
-import { IMAGES } from "../../../configs/paths/images.paths";
 import { Card } from "@/components/ui/card";
 
 export function Catalog() {
@@ -27,7 +26,7 @@ export function Catalog() {
                   height={30}
                   aria-hidden="true"
                   className={`size-[30px] object-contain ${
-                    group.provider === "anthropic" ? "invert" : ""
+                    group.provider === "anthropic" || group.provider === "xai" ? "invert" : ""
                   }`}
                 />
                 <h3 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
@@ -50,7 +49,9 @@ export function Catalog() {
                         width={15}
                         height={15}
                         aria-hidden="true"
-                        className="size-[15px] rounded-full object-contain"
+                        className={`size-[15px] rounded-full object-contain ${
+                          group.provider === "anthropic" || group.provider === "xai" ? "invert" : ""
+                        }`}
                       />
                       {group.modelProviderName}
                     </div>
@@ -67,37 +68,6 @@ export function Catalog() {
           ))}
         </div>
 
-        <div className="mt-8 flex flex-col gap-4 rounded-[20px] bg-[#151515] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <div>
-            <p className="m-0 text-sm font-medium text-spirit-text">
-              Доступны ещё 3 провайдера
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2" aria-label="DeepSeek, Google и xAI">
-            {[
-              { name: "DeepSeek", image: IMAGES.AI.DEEPSEEK },
-              { name: "Google", image: IMAGES.AI.GOOGLE },
-              { name: "xAI", image: IMAGES.AI.XAI, invert: true },
-            ].map((provider) => (
-              <span
-                className="inline-flex items-center gap-2 rounded-full bg-[#242424] px-3 py-2 text-xs font-medium text-[#d7dde5]"
-                key={provider.name}
-              >
-                <Image
-                  src={provider.image}
-                  alt=""
-                  width={18}
-                  height={18}
-                  aria-hidden="true"
-                  className={`size-[18px] object-contain ${
-                    provider.invert ? "invert" : ""
-                  }`}
-                />
-                {provider.name}
-              </span>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );

@@ -19,7 +19,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`flex min-h-[calc(100dvh-3rem)] shrink-0 flex-col bg-[#050505] px-2 py-3 text-[13px] text-[#f3f2ee] transition-[width] duration-200 ${
+      className={`sticky top-12 flex h-[calc(100dvh-3rem)] shrink-0 flex-col self-start bg-[#050505] px-2 py-3 text-[13px] text-[#f3f2ee] transition-[width] duration-200 ${
         collapsed ? "w-14" : "w-[232px]"
       }`}
       aria-label="Навигация дашборда"

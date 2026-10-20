@@ -6,7 +6,7 @@ import { PATHS } from "@/configs/paths/pages.paths";
 
 export function Navbar() {
   return (
-    <header className="relative z-10 flex h-12 py-6 items-center justify-between bg-spirit-header px-4">
+    <header className="sticky top-0 z-20 flex h-12 items-center justify-between bg-spirit-header px-4">
       <Link
         className="inline-flex shrink-0 items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-spirit-text"
         href={PATHS.HOME}
