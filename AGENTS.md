@@ -5,20 +5,20 @@
 - `src/app/(app)/page.tsx` composes the public landing page.
 - `src/app/(app)/_components/` contains one focused component per landing page section: navigation, hero, model catalog, quick start, and footer.
 - `src/app/globals.css` contains the site-wide styles and responsive layouts.
-- `configs/` is the source of truth for reusable site configuration:
-  - `types.ts` defines shared TypeScript data shapes.
-  - `paths.ts` defines public asset paths and page anchors.
-  - `links.ts` defines navigation destinations and shared interface labels.
-  - `models.ts` defines model categories, model names, icons, and displayed prices.
+- `src/configs/` contains reusable configuration organized by purpose and page/category:
+  - `consts/` contains constants in focused files such as `api.const.ts` and `models.const.ts`; do not collect unrelated values in a generic `spiritlm.consts.ts`.
+  - `types/` contains focused shared data types, grouped by category such as `models.types.ts`.
+  - `paths/` contains public asset paths and in-page anchors in separate files; `links.paths.ts` contains external destinations only.
 - `public/` contains the brand assets and model icons used by the site.
 
 ## Implementation rules
 
 - Keep the public website focused on the landing page unless the product brief explicitly requests another route.
 - Keep page composition in `page.tsx`; put section markup and behavior in the matching component under `_components/`.
-- Move shared labels, links, paths, model data, and reusable data types into `configs/`. Avoid duplicating those values in JSX.
-- Import model icons and other public images from the asset paths in `configs/paths.ts`.
-- Keep the model groups data-driven. Render each provider and its models from `configs/models.ts` instead of writing repeated cards by hand.
+- Keep reusable API values, model data, page paths, links, and shared types in focused files under `src/configs/`. Do not move page or button copy into configuration; write user-facing text in the relevant page component.
+- Export these path configuration objects as `IMAGES`, `PATHS`, and `LINKS`, with uppercase property names. Keep external destinations such as Telegram in `LINKS`; keep in-page anchors in `PATHS`.
+- Organize image paths to mirror the `public/` directory structure (for example, `AI.OPENAI` maps to `/ai/gpt.png`). Import public images from `src/configs/paths/images.paths.ts`.
+- Keep model groups data-driven. Render each provider and its models from `src/configs/consts/models.const.ts` instead of writing repeated cards by hand.
 - Display model prices as sample values until the product owner confirms production rates. Keep this status documented next to the values in the configuration.
 - Use real destinations for links. For in-page actions, point to an existing section anchor; do not add links to routes that do not exist.
 - Preserve semantic HTML, descriptive image alt text, keyboard focus states, and responsive layouts.

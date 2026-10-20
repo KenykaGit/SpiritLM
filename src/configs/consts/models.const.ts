@@ -1,12 +1,12 @@
-import type { ModelGroup } from "./types";
-import { ASSET_PATHS } from "./paths";
+import { IMAGES } from "../paths/images.paths";
+import type { ModelGroup } from "../types/models.types";
 
 // Sample display prices per million tokens. Replace with confirmed rates before launch.
 export const MODEL_GROUPS: ModelGroup[] = [
   {
     provider: "anthropic",
     name: "Claude",
-    icon: ASSET_PATHS.modelIcons.anthropic,
+    icon: IMAGES.AI.CLAUDE,
     models: [
       {
         id: "anthropic/claude-opus-5.5",
@@ -28,7 +28,7 @@ export const MODEL_GROUPS: ModelGroup[] = [
   {
     provider: "openai",
     name: "GPT",
-    icon: ASSET_PATHS.modelIcons.openai,
+    icon: IMAGES.AI.OPENAI,
     models: [
       {
         id: "openai/gpt-6-luna",

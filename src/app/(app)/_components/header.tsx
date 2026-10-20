@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { SITE_LINKS } from "../../../../configs/links";
-import { ASSET_PATHS } from "../../../../configs/paths";
+import { IMAGES } from "../../../configs/paths/images.paths";
+import { PATHS } from "../../../configs/paths/pages.paths";
 import { Button } from "@/components/ui/button";
 import { Icon } from "./icon";
 
@@ -18,7 +18,7 @@ export function Header() {
           Подключайте Claude и GPT через единый API — без лишних интеграций.
         </p>
         <Button asChild size="lg" className="mt-6 lg:mt-8">
-          <Link href={SITE_LINKS.quickStart}>
+          <Link href={PATHS.QUICK_START}>
             Начать работу
             <Icon name="arrow" size={17} />
           </Link>
@@ -28,7 +28,7 @@ export function Header() {
       <div className="relative grid min-h-80 place-items-center isolate sm:min-h-96 lg:min-h-0" aria-label="SpiritLM объединяет модели искусственного интеллекта">
         <div className="absolute -z-10 aspect-square w-64 rotate-[-9deg] rounded-[43%] border border-spirit-mark-border bg-spirit-mark before:absolute before:inset-8 before:rounded-full before:border before:border-spirit-mark-inner before:content-[''] sm:w-72 lg:w-96" aria-hidden="true" />
         <div className="relative h-80 w-full max-w-sm sm:h-96 lg:max-w-md">
-          <Image src={ASSET_PATHS.landingImage} alt="Маскот SpiritLM с символами ИИ" fill priority sizes="(max-width: 40rem) 90vw, 46vw" className="object-contain drop-shadow-2xl" />
+          <Image src={IMAGES.IMAGES.LANDING} alt="Маскот SpiritLM с символами ИИ" fill priority sizes="(max-width: 40rem) 90vw, 46vw" className="object-contain drop-shadow-2xl" />
         </div>
       </div>
     </section>

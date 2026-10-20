@@ -1,4 +1,4 @@
-import { API_BASE_URL, QUICK_START_MODEL_ID } from "../../../../configs/api";
+import { API_BASE_URL, QUICK_START_MODEL_ID } from "../../../configs/consts/api.const";
 import { Card } from "@/components/ui/card";
 
 export function QuickStart() {
