@@ -1,5 +1,4 @@
 import "../../scripts/load-env.mjs";
-import { POST as chatRoute } from "../../src/app/v1/chat/completions/route";
 import assert from "node:assert/strict";
 import { test, after } from "node:test";
 import { db } from "../../src/lib/db";
@@ -10,12 +9,12 @@ import { withBackendFixture } from "../helpers/backend-fixture";
 
 after(() => db.$disconnect());
 
-test("unapproved customer generation never reaches upstream", async () =>
-  withBackendFixture(async ({ authorized, upstream }) => {
-    const response = await chatRoute(authorized());
-    assert.equal(response.status, 503);
-    assert.equal((await response.json()).error.code, "pricing_not_configured");
-    assert.equal(upstream.chatCalls, 0);
+test("customer generation reaches upstream with preliminary prices", async () =>
+  withBackendFixture(async ({ body, context, upstream }) => {
+    const result = await proxyChat(body, { ...context, diagnostic: false });
+    assert.equal(result.response.status, 200);
+    assert.equal(upstream.chatCalls, 1);
+    await result.completion;
   }));
 
 test("ordinary response records usage and estimates without charging", async () =>

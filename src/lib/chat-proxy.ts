@@ -138,20 +138,11 @@ export function validateModelTokenLimit(
   }
 }
 
-// Used only by the owner's diagnostic command until retail tariffs are approved.
-// No customer generation or monetary debit is enabled by this implementation.
 export async function proxyChat(
   body: Record<string, unknown>,
   context: ProxyContext,
 ): Promise<ProxyResult> {
   validateChat(body);
-  if (!context.diagnostic) {
-    throw new ApiError(
-      503,
-      "pricing_not_configured",
-      "Генерация будет доступна после утверждения тарифов",
-    );
-  }
   const model = await resolveModel(body.model as string);
   validateModelTokenLimit(body, model.maxOutputTokens);
   const headers = upstreamHeaders();

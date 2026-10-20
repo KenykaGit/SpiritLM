@@ -21,6 +21,9 @@ import { dashboardFetch } from "@/lib/dashboard-client";
 
 export function KeysDashboard() {
   const [keys, setKeys] = useState<ApiKeySummary[]>([]);
+  const [issuedSecrets, setIssuedSecrets] = useState<Record<string, string>>(
+    {},
+  );
   const [secret, setSecret] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -74,6 +77,10 @@ export function KeysDashboard() {
         ]);
         setShowCreateForm(false);
         setCopied(false);
+        setIssuedSecrets((current) => ({
+          ...current,
+          [result.id]: result.secret,
+        }));
         setSecret(result.secret);
       })(),
       {
@@ -95,6 +102,17 @@ export function KeysDashboard() {
     }
   }
 
+  async function copyKey(keyId: string) {
+    const value = issuedSecrets[keyId];
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success("Ключ скопирован");
+    } catch {
+      toast.error("Не удалось скопировать ключ");
+    }
+  }
+
   function beginRename(key: ApiKeySummary) {
     setEditingKey(key.id);
     setNameDraft(key.name);
@@ -104,6 +122,11 @@ export function KeysDashboard() {
     event.preventDefault();
     const name = nameDraft.trim();
     if (!name || pendingKey) return;
+    const currentName = keys.find((key) => key.id === keyId)?.name;
+    if (name === currentName) {
+      setEditingKey(null);
+      return;
+    }
     setPendingKey(keyId);
     void toast
       .promise(
@@ -244,7 +267,7 @@ export function KeysDashboard() {
                   key={key.id}
                   className="border-t border-white/[0.06] px-5 py-4 sm:px-6"
                 >
-                  <div className="grid gap-4 lg:grid-cols-[minmax(220px,1.5fr)_minmax(230px,1fr)_minmax(190px,0.9fr)_auto] lg:items-center">
+                  <div className="grid gap-4 lg:grid-cols-[minmax(220px,1.5fr)_minmax(320px,1.3fr)_auto] lg:items-center">
                     <div className="flex min-w-0 items-start gap-3">
                       <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#242424] text-[#bdbdb8]">
                         <IconKey aria-hidden="true" size={17} stroke={1.6} />
@@ -305,7 +328,7 @@ export function KeysDashboard() {
                       </div>
                     </div>
 
-                    <dl className="grid grid-cols-2 gap-3 rounded-xl bg-[#242424]/70 px-3 py-2.5 lg:bg-transparent lg:px-0 lg:py-0">
+                    <dl className="grid grid-cols-2 gap-3 rounded-xl bg-[#242424]/70 px-3 py-2.5 sm:grid-cols-3 lg:bg-transparent lg:px-0 lg:py-0">
                       <div>
                         <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
                           Списания
@@ -322,18 +345,30 @@ export function KeysDashboard() {
                           {key.requests.toLocaleString("ru-RU")}
                         </dd>
                       </div>
+                      <div className="col-span-2 sm:col-span-1">
+                        <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
+                          Последнее использование
+                        </dt>
+                        <dd className="mt-1 text-xs text-[#d0d0cb]">
+                          {key.lastUsedAt
+                            ? new Date(key.lastUsedAt).toLocaleString("ru-RU")
+                            : "Ещё не использовался"}
+                        </dd>
+                      </div>
                     </dl>
 
-                    <p className="text-xs text-[#999994]">
-                      <span className="text-[#777875]">
-                        Последнее использование ·{" "}
-                      </span>
-                      {key.lastUsedAt
-                        ? new Date(key.lastUsedAt).toLocaleString("ru-RU")
-                        : "Ещё не использовался"}
-                    </p>
-
                     <div className="flex items-center gap-1 lg:justify-end">
+                      {issuedSecrets[key.id] ? (
+                        <button
+                          type="button"
+                          onClick={() => void copyKey(key.id)}
+                          aria-label={`Скопировать ключ ${key.name}`}
+                          title="Скопировать ключ"
+                          className="inline-flex size-10 items-center justify-center rounded-lg text-[#999994] transition-colors hover:bg-white/[0.07] hover:text-[#f3f2ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
+                        >
+                          <IconCopy aria-hidden="true" size={17} />
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         disabled={pendingKey !== null}

@@ -22,9 +22,8 @@ export default async function DashboardDocsPage() {
           <h1 id="dashboard-page-title" className="text-2xl font-semibold tracking-tight sm:text-3xl">Документация</h1>
           <p className="mt-3 text-sm leading-6 text-[#a5a5a1]">SpiritLM предоставляет API в формате OpenAI Chat Completions.</p>
           <p className="mt-3 rounded-xl bg-[#ffe02e]/10 p-4 text-sm leading-6 text-[#ffe02e]">
-            Тарифы пока предварительные. Выпуск ключей и список доступных моделей работают;
-            генерации для пользователей будут открыты после утверждения тарифов.
-            Сейчас они возвращают HTTP 503 с кодом pricing_not_configured.
+            Генерация через Chat Completions доступна. Цены в каталоге остаются предварительными;
+            запросы пока не списывают средства с баланса.
           </p>
           <Link href={PATHS.DASHBOARD.KEYS} className="mt-4 inline-flex rounded-xl bg-[#ffe02e] px-4 py-2 text-sm font-semibold text-[#171717] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]">API-ключи</Link>
         </header>
@@ -36,7 +35,7 @@ export default async function DashboardDocsPage() {
           <CodeBlock title="Список моделей" value={code.models} />
           <p className="mt-3">Используйте ID из ответа API. Цены в <Link href={PATHS.DASHBOARD.MODELS} className="text-[#ffe02e] hover:underline">каталоге</Link> остаются предварительными.</p>
         </GuideSection>
-        <GuideSection id="chat" title="Chat Completions" description="POST /v1/chat/completions принимает model, messages и параметры генерации. Пример для использования после открытия доступа.">
+        <GuideSection id="chat" title="Chat Completions" description="POST /v1/chat/completions принимает model, messages и параметры генерации.">
           <CodeBlock title="Обычный запрос" value={code.chat} />
           <p className="mt-3">Максимальный размер тела — 1 МиБ, количество сообщений — 256. Лимит вывода задаётся положительным целым числом через max_tokens или max_completion_tokens. Верхняя граница зависит от выбранной модели и возвращается в /v1/models как max_output_tokens, если поставщик её объявляет. Если лимит не задан, используется настройка поставщика. Поддерживается один вариант ответа: n = 1.</p>
         </GuideSection>
@@ -46,10 +45,10 @@ export default async function DashboardDocsPage() {
           <p className="mt-3">При обрыве потока расход может остаться неизвестным. Такие запросы отмечаются в истории; неизвестный расход не считается нулевым.</p>
         </GuideSection>
         <GuideSection id="protocols" title="Другие протоколы" description="Responses API, Anthropic Messages и подсчёт токенов отдельным endpoint пока не подключены.">
-          <p>Интеграции, требующие этих протоколов, включая Codex и Claude Code, пока недоступны. Для клиентов с поддержкой Chat Completions можно использовать указанный Base URL после открытия генераций.</p>
+          <p>Интеграции, требующие этих протоколов, включая Codex и Claude Code, пока недоступны. Для запросов используйте протокол Chat Completions.</p>
         </GuideSection>
         <GuideSection id="errors" title="Ошибки" description="Ответы об ошибках содержат объект error с полями message, type и code.">
-          <p>401 — неверный или отозванный ключ; 400 — некорректные параметры; 413 — слишком большой запрос; 429 — превышение лимитов; 502/504 — ошибка или таймаут модели; 503 pricing_not_configured — тарифы ещё не утверждены.</p>
+          <p>401 — неверный или отозванный ключ; 400 — некорректные параметры; 413 — слишком большой запрос; 429 — превышение лимитов; 502/504 — ошибка или таймаут модели.</p>
           <p className="mt-3">Не повторяйте автоматически генерацию после обрыва: поставщик мог уже обработать запрос. В истории сохраняется ID запроса для диагностики.</p>
         </GuideSection>
       </div>
