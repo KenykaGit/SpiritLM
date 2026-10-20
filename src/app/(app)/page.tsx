@@ -1,8 +1,8 @@
 import { Catalog } from "./_components/catalog";
+import { Agents } from "./_components/agents";
 import { Footer } from "./_components/footer";
 import { Header } from "./_components/header";
 import { Navbar } from "./_components/navbar";
-import { QuickStart } from "./_components/quick-start";
 
 export default function Home() {
   return (
@@ -11,7 +11,7 @@ export default function Home() {
       <main>
         <Header />
         <Catalog />
-        <QuickStart />
+        <Agents />
       </main>
       <Footer />
     </div>

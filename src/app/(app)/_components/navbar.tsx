@@ -16,7 +16,7 @@ export function Navbar() {
           <Link href={PATHS.MODELS}>Перейти</Link>
         </Button>
         <Button asChild variant="ghost" size="sm" className="border border-spirit-border hover:border-spirit-muted">
-          <Link href={PATHS.QUICK_START}>Войти</Link>
+          <Link href={PATHS.AGENTS}>Агенты</Link>
         </Button>
       </nav>
     </header>

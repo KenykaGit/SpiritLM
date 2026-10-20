@@ -1,10 +1,7 @@
 import Image from "next/image";
-import Link from "next/link";
 import { MODEL_GROUPS } from "../../../configs/consts/models.const";
-import { PATHS } from "../../../configs/paths/pages.paths";
-import { Button } from "@/components/ui/button";
+import { IMAGES } from "../../../configs/paths/images.paths";
 import { Card } from "@/components/ui/card";
-import { Icon } from "./icon";
 
 export function Catalog() {
   return (
@@ -14,35 +11,92 @@ export function Catalog() {
           <h2 className="font-heading text-4xl font-bold leading-tight tracking-tighter text-balance sm:text-5xl">
             Выберите модель
           </h2>
-          <p className="m-0 text-sm text-spirit-muted">Один API для Claude и GPT</p>
+          <p className="m-0 text-sm text-spirit-muted">
+            Один API для моделей разных провайдеров
+          </p>
         </div>
 
         <div className="grid gap-8 lg:gap-10">
           {MODEL_GROUPS.map((group) => (
             <section key={group.provider}>
               <div className="mb-4 flex items-center gap-3">
-                <Image src={group.icon} alt="" width={34} height={34} aria-hidden="true" />
-                <h3 className="font-heading text-2xl font-semibold tracking-tight">{group.name}</h3>
+                <Image
+                  src={group.icon}
+                  alt=""
+                  width={30}
+                  height={30}
+                  aria-hidden="true"
+                  className={`size-[30px] object-contain ${
+                    group.provider === "anthropic" ? "invert" : ""
+                  }`}
+                />
+                <h3 className="font-heading text-xl font-semibold tracking-tight sm:text-2xl">
+                  {group.name}
+                </h3>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {group.models.map((model) => (
-                  <Card className="flex min-h-40 flex-col p-4 transition duration-200 hover:-translate-y-0.5 hover:bg-spirit-surface-hover sm:min-h-48 sm:p-5" key={model.id}>
-                    <h4 className="mb-4 text-lg font-semibold tracking-tight">{model.name}</h4>
-                    <p className="mb-4 mt-auto flex items-baseline gap-2">
-                      <span className="text-2xl font-semibold tracking-tight tabular-nums">{model.pricePerMillionTokens}</span>
-                      <span className="text-xs text-spirit-muted">за 1 MTok</span>
+                  <Card
+                    className="flex min-h-48 flex-col rounded-[20px] bg-[#1b1b1b] p-5 transition duration-200 hover:bg-spirit-surface-hover sm:p-6"
+                    key={model.id}
+                  >
+                    <h4 className="mb-3 truncate text-base font-semibold tracking-tight sm:text-lg">
+                      {model.name}
+                    </h4>
+                    <div className="mb-4 flex items-center gap-2 self-start rounded-full bg-[#303943] px-2.5 py-1 text-xs text-[#d7dde5]">
+                      <Image
+                        src={group.modelProviderIcon}
+                        alt=""
+                        width={15}
+                        height={15}
+                        aria-hidden="true"
+                        className="size-[15px] rounded-full object-contain"
+                      />
+                      {group.modelProviderName}
+                    </div>
+                    <p className="mb-0 mt-auto flex items-baseline justify-between gap-2 text-sm">
+                      <span className="text-spirit-muted">Цена за 1 MTok</span>
+                      <span className="font-semibold tabular-nums text-spirit-text">
+                        {model.pricePerMillionTokens}
+                      </span>
                     </p>
-                    <Button asChild variant="link" className="flex w-full justify-between border-t border-spirit-border pt-2 [&_svg]:transition-transform [&:hover_svg]:translate-x-1">
-                      <Link href={PATHS.QUICK_START}>
-                        Использовать модель
-                        <Icon name="arrow" size={15} />
-                      </Link>
-                    </Button>
                   </Card>
                 ))}
               </div>
             </section>
           ))}
+        </div>
+
+        <div className="mt-8 flex flex-col gap-4 rounded-[20px] bg-[#151515] p-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+          <div>
+            <p className="m-0 text-sm font-medium text-spirit-text">
+              Доступны ещё 3 провайдера
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2" aria-label="DeepSeek, Google и xAI">
+            {[
+              { name: "DeepSeek", image: IMAGES.AI.DEEPSEEK },
+              { name: "Google", image: IMAGES.AI.GOOGLE },
+              { name: "xAI", image: IMAGES.AI.XAI, invert: true },
+            ].map((provider) => (
+              <span
+                className="inline-flex items-center gap-2 rounded-full bg-[#242424] px-3 py-2 text-xs font-medium text-[#d7dde5]"
+                key={provider.name}
+              >
+                <Image
+                  src={provider.image}
+                  alt=""
+                  width={18}
+                  height={18}
+                  aria-hidden="true"
+                  className={`size-[18px] object-contain ${
+                    provider.invert ? "invert" : ""
+                  }`}
+                />
+                {provider.name}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </section>

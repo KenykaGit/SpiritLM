@@ -1,5 +1,5 @@
 export const PATHS = {
   HOME: "/",
   MODELS: "#models",
-  QUICK_START: "#quick-start",
+  AGENTS: "#agents",
 } as const;

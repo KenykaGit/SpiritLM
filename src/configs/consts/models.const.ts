@@ -5,45 +5,49 @@ import type { ModelGroup } from "../types/models.types";
 export const MODEL_GROUPS: ModelGroup[] = [
   {
     provider: "anthropic",
-    name: "Claude",
-    icon: IMAGES.AI.CLAUDE,
+    name: "Antropic",
+    icon: IMAGES.AI.ANTHROPIC,
+    modelProviderName: "Claude",
+    modelProviderIcon: IMAGES.AI.CLAUDE,
     models: [
       {
         id: "anthropic/claude-opus-5.5",
         name: "Claude Opus 5.5",
-        pricePerMillionTokens: "$15.00",
+        pricePerMillionTokens: "29₽",
       },
       {
         id: "anthropic/claude-sonnet-5.5",
         name: "Claude Sonnet 5.5",
-        pricePerMillionTokens: "$3.00",
+        pricePerMillionTokens: "14.5₽",
       },
       {
         id: "anthropic/claude-haiku-5.5",
         name: "Claude Haiku 5.5",
-        pricePerMillionTokens: "$0.80",
+        pricePerMillionTokens: "8₽",
       },
     ],
   },
   {
     provider: "openai",
-    name: "GPT",
+    name: "OpenAI",
     icon: IMAGES.AI.OPENAI,
+    modelProviderName: "GPT",
+    modelProviderIcon: IMAGES.AI.OPENAI,
     models: [
       {
-        id: "openai/gpt-6-luna",
-        name: "GPT-6 Luna",
-        pricePerMillionTokens: "$0.40",
+        id: "openai/gpt-6-astra",
+        name: "GPT-6 Astra",
+        pricePerMillionTokens: "63₽",
       },
       {
         id: "openai/gpt-6.1-sol",
         name: "GPT-6.1 Sol",
-        pricePerMillionTokens: "$2.50",
+        pricePerMillionTokens: "24₽",
       },
       {
-        id: "openai/gpt-6-astra",
-        name: "GPT-6 Astra",
-        pricePerMillionTokens: "$8.00",
+        id: "openai/gpt-6-luna",
+        name: "GPT-6 Luna",
+        pricePerMillionTokens: "4.5₽",
       },
     ],
   },

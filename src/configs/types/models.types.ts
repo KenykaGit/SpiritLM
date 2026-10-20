@@ -10,5 +10,7 @@ export type ModelGroup = {
   provider: ModelProvider;
   name: string;
   icon: string;
+  modelProviderName: string;
+  modelProviderIcon: string;
   models: Model[];
 };
