@@ -1,3 +1,4 @@
+import { Show, UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { IMAGES } from "../../../configs/paths/images.paths";
@@ -21,9 +22,14 @@ export function Navbar() {
         <Button asChild className="min-h-8 rounded-md px-3 text-xs" size="sm">
           <Link href={PATHS.MODELS}>Перейти</Link>
         </Button>
-        <Button asChild className="min-h-8 rounded-md px-3 text-xs" variant="ghost" size="sm">
-          <Link href={PATHS.AGENTS}>Войти</Link>
-        </Button>
+        <Show when="signed-out">
+          <Button asChild className="min-h-8 rounded-md px-3 text-xs" variant="ghost" size="sm">
+            <Link href="/auth/sign-in">Войти</Link>
+          </Button>
+        </Show>
+        <Show when="signed-in">
+          <UserButton />
+        </Show>
       </nav>
     </header>
   );

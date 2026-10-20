@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import "./globals.css";
 
@@ -13,7 +14,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ru">
       <body className="min-h-screen bg-spirit-canvas font-body text-spirit-text antialiased selection:bg-spirit-accent selection:text-spirit-accent-ink">
-        {children}
+        <ClerkProvider signInUrl="/auth/sign-in" signUpUrl="/auth/sign-up">
+          {children}
+        </ClerkProvider>
       </body>
     </html>
   );
