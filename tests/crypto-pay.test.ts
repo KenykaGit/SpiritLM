@@ -3,6 +3,10 @@ import { createHash, createHmac } from "node:crypto";
 import { test } from "node:test";
 import { z } from "zod";
 import { cryptoBotConfig, cryptoPayRequest, verifyCryptoSignature } from "../src/lib/crypto-pay";
+import {
+  createCryptoReconcileTriggerToken,
+  verifyCryptoReconcileTriggerToken,
+} from "../src/lib/crypto-reconcile-auth";
 import { InputSchema } from "../src/actions/reserve-crypto-payment/schema";
 
 test("payment mode fails closed and selects only the matching token and endpoint", () => {
@@ -40,6 +44,16 @@ test("webhook signature covers the exact raw body and rejects malformed signatur
   for (const invalid of [null, "", "a", "0".repeat(64), "z".repeat(64)]) {
     assert.equal(verifyCryptoSignature(body, invalid, token), false);
   }
+});
+
+test("scheduled reconciliation trigger requires a token derived from the Crypto Pay token", () => {
+  const cryptoPayToken = "123:reconcile-test";
+  const triggerToken = createCryptoReconcileTriggerToken(cryptoPayToken);
+
+  assert.equal(verifyCryptoReconcileTriggerToken(cryptoPayToken, triggerToken), true);
+  assert.equal(verifyCryptoReconcileTriggerToken("other-token", triggerToken), false);
+  assert.equal(verifyCryptoReconcileTriggerToken(cryptoPayToken, "invalid"), false);
+  assert.equal(verifyCryptoReconcileTriggerToken(cryptoPayToken, null), false);
 });
 
 test("payment validation enforces RUB amount precision and limits", () => {

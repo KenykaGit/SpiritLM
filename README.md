@@ -194,8 +194,9 @@ Next.js routes объявляют `maxDuration = 120`; генерация, ко�
 таймауты приложения до лимита хостинга.
 
 Для CryptoBot webhook задайте URL `https://ваш-домен/api/payments/cryptobot/webhook`.
-Периодическую сверку `npm run payments:reconcile` можно добавить отдельно в
-планировщик; Netlify не запускает этот локальный скрипт автоматически.
+Netlify Scheduled Function `crypto-reconcile` запускает ту же сверку раз в минуту
+по UTC после production-деплоя. Для ручного запуска локально используйте
+`npm run payments:reconcile`.
 
 ## Vercel
 
