@@ -9,17 +9,17 @@ export function ClaudeCodeGuide({ code }: { code: DocsCode }) {
     <GuideSection
       id="claude-code"
       title="Claude Code"
-      description="Claude Code требует Anthropic Messages API. В SpiritLM endpoint /v1/messages пока не реализован."
+      description="Claude Code подключается через совместимый Anthropic Messages endpoint SpiritLM."
     >
       <p>
-        Модель Anthropic в каталоге SpiritLM доступна через Chat Completions; это не означает поддержку
-        протокола Claude Code. Для работы с такими моделями сейчас используйте OpenCode или Cline.
+        Claude Code можно подключить через /v1/messages. Используйте модель Anthropic из каталога и ключ
+        SpiritLM. Запросы поддерживают текст и встроенные инструменты Claude; изображения и другие
+        мультимодальные блоки пока не поддерживаются.
       </p>
       <details className="mt-4 rounded-xl bg-[#111] p-4">
-        <summary className="cursor-pointer rounded text-[#f3f2ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]">Условная настройка после появления Messages API</summary>
+        <summary className="cursor-pointer rounded text-[#f3f2ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]">Настройка Claude Code</summary>
         <p className="mt-3">
-          Этот шаблон сейчас не подключит Claude Code к SpiritLM. Потребуется отдельно объявленный Messages
-          endpoint и модель, поддерживающая этот протокол. Добавьте значения в пользовательский
+          Задайте URL и ключ в пользовательском
           ~/.claude/settings.json (Windows: %USERPROFILE%\.claude\settings.json), сохранив остальные настройки.
         </p>
         <CodeBlock
@@ -27,8 +27,8 @@ export function ClaudeCodeGuide({ code }: { code: DocsCode }) {
           value={code.claude}
         />
         <p className="mt-3">
-          После появления поддержки выберите ID модели и проверьте /model. Ключ в settings.json хранится
-          открытым текстом: ограничьте доступ к файлу. Не заменяйте placeholder текущим Chat Completions URL.
+          Подставьте ключ вместо placeholder и выберите модель командой /model. Ключ в settings.json
+          хранится открытым текстом; ограничьте доступ к файлу.
         </p>
       </details>
       <p className="mt-4"><a
@@ -46,23 +46,25 @@ export function CodexGuide({ code }: { code: DocsCode }) {
     <GuideSection
       id="codex"
       title="Codex"
-      description="Codex использует Responses API. Endpoint /v1/responses в SpiritLM пока не реализован."
+      description="Codex использует OpenAI Responses API через /v1/responses."
     >
       <p>
-        Замена Base URL и выбор GPT из каталога не обеспечат подключение Codex. До появления Responses API
-        используйте интеграцию с Chat Completions.
+        SpiritLM предоставляет /v1/responses с текстовым вводом, функциями и потоковыми событиями.
+        Выберите модель из каталога; изображения и другие мультимодальные элементы не поддерживаются,
+        а вызов инструментов зависит от модели.
       </p>
       <details className="mt-4 rounded-xl bg-[#111] p-4">
-        <summary className="cursor-pointer rounded text-[#f3f2ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]">Условная настройка после появления Responses API</summary>
+        <summary className="cursor-pointer rounded text-[#f3f2ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]">Настройка Codex</summary>
         <p className="mt-3">
-          Потребуется объявленный Responses Base URL и поддерживаемый этим протоколом ID модели. Конфигурация
+          Базовый URL заканчивается на /v1: Codex сам добавляет /responses. Конфигурация
           провайдера находится в пользовательском ~/.codex/config.toml (Windows:
-          %USERPROFILE%\.codex\config.toml). Codex сам добавляет /responses к базовому адресу.
+          %USERPROFILE%\.codex\config.toml).
         </p>
         <CodeBlock
           title="~/.codex/config.toml"
           value={code.codex}
         />
+        <CodeBlock title="Проверка Responses API" value={code.responses} />
         <p className="mt-3">
           Для профиля создайте ~/.codex/spiritlm.config.toml с верхнеуровневыми model и model_provider, затем
           запускайте codex --profile spiritlm. В актуальном CLI профили хранятся в отдельных файлах: таблицы

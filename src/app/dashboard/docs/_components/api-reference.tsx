@@ -101,8 +101,14 @@ export function ConnectionGuide({ baseUrl, code }: { baseUrl: string; code: Docs
       />
       <p className="mt-4">
         В SDK укажите этот адрес как base_url / baseURL. Не добавляйте к нему /chat/completions и повторный
-        /v1. Все /v1-запросы требуют заголовок Authorization: Bearer с ключом SpiritLM; вход в кабинет через
+        /v1. Chat Completions и Responses требуют Authorization: Bearer; Anthropic Messages принимает
+        x-api-key. Вход в кабинет через
         Clerk его не заменяет.
+      </p>
+      <p className="mt-3">
+        Для клиентов на других протоколах также доступны <code>POST /v1/messages</code> (Anthropic Messages,
+        заголовок <code>x-api-key</code>) и <code>POST /v1/responses</code> (OpenAI Responses, Bearer).
+        Оба маршрута используют тот же каталог, баланс и лимиты SpiritLM.
       </p>
       <p className="mt-3 text-[#a5a5a1]">
         curl-примеры ниже рассчитаны на Bash/zsh. В PowerShell используйте curl.exe и замените переменные и

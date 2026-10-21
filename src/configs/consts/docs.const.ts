@@ -37,6 +37,19 @@ export function docsCode(baseUrl: string) {
       data: [{ id: DOCS_MODEL_ID, object: "model", created: 0, owned_by: "spiritlm" }],
     }, null, 2),
     chat: curl(false),
+    anthropic: [
+      `curl -i ${JSON.stringify(`${url}/messages`)} \\`,
+      '  -H "x-api-key: $SPIRITLM_API_KEY" \\',
+      '  -H "anthropic-version: 2023-06-01" \\',
+      '  -H "content-type: application/json" \\',
+      `  -d '${JSON.stringify({ model: "anthropic/claude-sonnet-4.6", max_tokens: 128, messages: [{ role: "user", content: "Привет!" }] }, null, 2)}'`,
+    ].join("\n"),
+    responses: [
+      `curl -i ${JSON.stringify(`${url}/responses`)} \\`,
+      '  -H "Authorization: Bearer $SPIRITLM_API_KEY" \\',
+      '  -H "Content-Type: application/json" \\',
+      `  -d '${JSON.stringify({ model: DOCS_MODEL_ID, input: "Привет!", max_output_tokens: 128 }, null, 2)}'`,
+    ].join("\n"),
     chatResponse: JSON.stringify({
       id: "chatcmpl-example",
       object: "chat.completion",
@@ -211,7 +224,7 @@ try {
       "",
       "[model_providers.spiritlm]",
       'name = "SpiritLM"',
-      'base_url = "<RESPONSES_BASE_URL_БЕЗ_ПУТИ_RESPONSES>"',
+      `base_url = ${JSON.stringify(url)}`,
       'env_key = "SPIRITLM_API_KEY"',
       'wire_api = "responses"',
       "request_max_retries = 0",
@@ -219,7 +232,7 @@ try {
     ].join("\n"),
     claude: JSON.stringify({
       env: {
-        ANTHROPIC_BASE_URL: "<БАЗОВЫЙ_URL_ANTHROPIC_MESSAGES>",
+        ANTHROPIC_BASE_URL: url,
         ANTHROPIC_AUTH_TOKEN: "<ВАШ_КЛЮЧ_SPIRITLM>",
       },
       model: "anthropic/claude-sonnet-4.6",
