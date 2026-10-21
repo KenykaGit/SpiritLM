@@ -4,7 +4,9 @@ const isDashboardRoute = createRouteMatcher(["/dashboard(.*)"]);
 
 export default clerkMiddleware(async (auth, request) => {
   if (isDashboardRoute(request)) {
-    await auth.protect();
+    await auth.protect({
+      unauthenticatedUrl: new URL("/auth/sign-in", request.url).toString(),
+    });
   }
 });
 

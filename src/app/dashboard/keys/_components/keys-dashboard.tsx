@@ -34,6 +34,7 @@ export function KeysDashboard() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showTopUpForm, setShowTopUpForm] = useState(false);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const [keyToDelete, setKeyToDelete] = useState<ApiKeySummary | null>(null);
   const totalSpent = keys.reduce((total, key) => total + Number(key.spent), 0);
   const totalRequests = keys.reduce((total, key) => total + key.requests, 0);
 
@@ -161,6 +162,7 @@ export function KeysDashboard() {
             method: "DELETE",
           });
           setKeys((current) => current.filter((item) => item.id !== key.id));
+          setKeyToDelete(null);
         })(),
         {
           loading: "Отзываем ключ…",
@@ -399,7 +401,7 @@ export function KeysDashboard() {
                       <button
                         type="button"
                         disabled={pendingKey !== null}
-                        onClick={() => deleteKey(key)}
+                        onClick={() => setKeyToDelete(key)}
                         aria-label={`Удалить ключ ${key.name}`}
                         title="Удалить"
                         className="inline-flex size-10 items-center justify-center rounded-lg text-[#999994] transition-colors hover:bg-[#e05a5a]/10 hover:text-[#ff8585] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
@@ -462,6 +464,42 @@ export function KeysDashboard() {
         open={showTopUpForm}
         onClose={() => setShowTopUpForm(false)}
       />
+      <ModalShell
+        open={keyToDelete !== null}
+        titleId="delete-key-title"
+        title="Удалить API-ключ?"
+        description={
+          keyToDelete
+            ? `Ключ «${keyToDelete.name}» будет отозван. Все приложения, использующие его, потеряют доступ. Это действие нельзя отменить.`
+            : ""
+        }
+        icon={<IconTrash aria-hidden="true" size={19} />}
+        onClose={() => {
+          if (!pendingKey) setKeyToDelete(null);
+        }}
+      >
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            disabled={pendingKey !== null}
+            onClick={() => setKeyToDelete(null)}
+            className="inline-flex min-h-10 items-center justify-center rounded-lg px-4 text-sm font-medium text-[#bdbdb8] transition-colors hover:bg-white/[0.06] hover:text-[#f3f2ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Отмена
+          </button>
+          <button
+            type="button"
+            disabled={pendingKey !== null || keyToDelete === null}
+            onClick={() => {
+              if (keyToDelete) deleteKey(keyToDelete);
+            }}
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-[#e05a5a] px-4 text-sm font-semibold text-white transition-colors hover:bg-[#ef6969] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ff8585] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <IconTrash aria-hidden="true" size={16} />
+            {pendingKey === keyToDelete?.id ? "Удаляем…" : "Удалить ключ"}
+          </button>
+        </div>
+      </ModalShell>
     </main>
   );
 }
