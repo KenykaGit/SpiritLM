@@ -15,7 +15,6 @@ npm run dev
 - `DATABASE_URL` — подключение отдельного пользователя к базе `spiritlm`.
 - `CHEAPVIBE_API_KEY` — серверный ключ поставщика, без префикса `NEXT_PUBLIC_`.
 - Clerk: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` и `CLERK_SECRET_KEY`.
-- `NEXT_PUBLIC_API` — публичный адрес SpiritLM с `/v1` в конце, например `https://your-domain.example/v1`. Изменение требует нового развёртывания.
 
 Секреты не добавляются в Git. Для текущей среды база `spiritlm` уже создана, начальная миграция применена, локальное подключение сохранено.
 
@@ -179,8 +178,6 @@ SSR и API routes обрабатываются Next.js adapter, который N
   экземпляра Clerk.
 - `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/auth/sign-in` и
   `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/auth/sign-up`.
-- `NEXT_PUBLIC_API=https://ваш-домен/v1` — публичный URL этого сайта с `/v1`;
-  после смены домена нужен новый deploy.
 
 Для CryptoBot дополнительно задайте `CRYPTO_BOT_MODE` и соответствующий токен;
 оставьте эти переменные пустыми, если пополнения не нужны. `DATABASE_ADMIN_URL`
@@ -194,8 +191,8 @@ Next.js routes объявляют `maxDuration = 120`; генерация, ко�
 таймауты приложения до лимита хостинга.
 
 Для CryptoBot webhook задайте URL `https://ваш-домен/api/payments/cryptobot/webhook`.
-Периодическую сверку `npm run payments:reconcile` настройте в отдельном
-планировщике раз в минуту: Netlify не запускает этот локальный скрипт автоматически.
+Периодическую сверку `npm run payments:reconcile` можно добавить отдельно в
+планировщик; Netlify не запускает этот локальный скрипт автоматически.
 
 ## Vercel
 

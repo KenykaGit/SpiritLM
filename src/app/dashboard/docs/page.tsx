@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { docsCode } from "@/configs/consts/docs.const";
-import { API_URL } from "@/configs/consts/api.const";
 import { LINKS } from "@/configs/paths/links.paths";
 import { PATHS } from "@/configs/paths/pages.paths";
 import {
@@ -38,7 +37,7 @@ export default async function DashboardDocsPage() {
   const protocol = forwardedProtocol === "http" || (!forwardedProtocol && localHost)
     ? "http"
     : "https";
-  const baseUrl = (API_URL ?? `${protocol}://${host}/v1`).replace(/\/+$/, "");
+  const baseUrl = `${protocol}://${host}/v1`;
   const code = docsCode(baseUrl);
 
   return (
