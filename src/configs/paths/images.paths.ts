@@ -3,6 +3,8 @@ export const IMAGES = {
   ICON: "/icon.png",
   IMAGES: {
     LANDING: "/images/landing.png",
+    CRYPTOBOT: "/images/cryptobot.png",
+    SBP: "/images/sbp.png",
   },
   AI: {
     OPENAI: "/ai/gpt.png",

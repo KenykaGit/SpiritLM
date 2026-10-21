@@ -11,10 +11,49 @@ model User {
   id          String        @id @default(cuid())
   clerkId     String        @unique @db.VarChar(191)
   balance     Decimal       @default(0) @db.Decimal(20, 8)
+  testBalance Decimal       @default(0) @db.Decimal(20, 8)
   createdAt   DateTime      @default(now())
   keys        ApiKey[]
   requests    ApiRequest[]
   entries     BalanceEntry[]
+  payments    Payment[]
+}
+
+model Payment {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  requestId   String    @db.VarChar(36)
+  mode        String    @db.VarChar(4)
+  appId       String    @db.VarChar(32)
+  invoiceId   String?   @db.VarChar(32)
+  amount      Decimal   @db.Decimal(20, 8)
+  currency    String    @default("RUB") @db.VarChar(3)
+  status      PaymentStatus @default(CREATING)
+  invoiceUrl  String?   @db.VarChar(2048)
+  createdAt   DateTime  @default(now())
+  expiresAt   DateTime?
+  paidAt      DateTime?
+  creditedAt  DateTime?
+  checkedAt   DateTime?
+  paidAsset   String?   @db.VarChar(16)
+  paidAmount  Decimal?  @db.Decimal(30, 18)
+  feeAsset    String?   @db.VarChar(16)
+  feeAmount   Decimal?  @db.Decimal(30, 18)
+
+  @@unique([userId, mode, appId, requestId])
+  @@unique([mode, appId, invoiceId])
+  @@index([userId, mode, appId, createdAt])
+  @@index([mode, appId, creditedAt, checkedAt])
+}
+
+enum PaymentStatus {
+  CREATING
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+  FAILED
 }
 
 model ApiKey {

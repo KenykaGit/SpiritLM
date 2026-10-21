@@ -215,13 +215,11 @@ export function KeysDashboard() {
               label="API-ключи"
               value={loading || error ? undefined : String(keys.length)}
               loading={loading}
-              detail="Текущий месяц · UTC"
             />
             <Metric
               label="Списания за месяц"
               value={loading || error ? undefined : formatRubles(totalSpent)}
               loading={loading}
-              detail="Текущий месяц · UTC"
             />
             <Metric
               label="Запросы за месяц"
@@ -229,7 +227,6 @@ export function KeysDashboard() {
                 loading || error ? undefined : totalRequests.toLocaleString("ru-RU")
               }
               loading={loading}
-              detail="Текущий месяц · UTC"
             />
           </div>
         </section>
@@ -473,12 +470,10 @@ function Metric({
   label,
   value,
   loading = false,
-  detail,
 }: {
   label: string;
   value?: string;
   loading?: boolean;
-  detail: string;
 }) {
   return (
     <div className="rounded-[14px] bg-[#242424] px-4 py-4">
@@ -486,7 +481,6 @@ function Metric({
       <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
         {loading ? <Skeleton className="h-7 w-28" /> : value ?? "Недоступно"}
       </p>
-      <p className="mt-1 text-[11px] text-[#777875]">{detail}</p>
     </div>
   );
 }

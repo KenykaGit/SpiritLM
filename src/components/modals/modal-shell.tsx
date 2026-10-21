@@ -121,7 +121,7 @@ export function ModalShell({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={`w-full max-w-md rounded-[18px] bg-[#1b1b1b] p-5 shadow-2xl transition-[opacity,transform,translate,scale] duration-300 ease-out motion-reduce:duration-0 sm:p-6 ${visible && open ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.98] opacity-0"}`}
+        className={`max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-contain rounded-[18px] bg-[#1b1b1b] p-5 shadow-2xl transition-[opacity,transform,translate,scale] duration-300 ease-out motion-reduce:duration-0 sm:p-6 ${visible && open ? "translate-y-0 scale-100 opacity-100" : "translate-y-2 scale-[0.98] opacity-0"}`}
       >
         <div className="flex items-start justify-between gap-4">
           <div>

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 export type TopUpModalProps = {
   open: boolean;
   onClose: () => void;
+  onPaid?: () => void;
 };
 
 export type CreateApiKeyModalProps = {

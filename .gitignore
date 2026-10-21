@@ -32,3 +32,6 @@ next-env.d.ts
 .agents
 .codex
 .aws
+
+prisma/migrations
+docs

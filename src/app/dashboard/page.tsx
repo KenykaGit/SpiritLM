@@ -36,6 +36,7 @@ export default function Dashboard() {
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState<DashboardPeriod>("2d");
+  const [balanceRevision, setBalanceRevision] = useState(0);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     const controller = new AbortController();
@@ -64,7 +65,7 @@ export default function Dashboard() {
       controller.abort();
       window.clearInterval(interval);
     };
-  }, [selectedPeriod]);
+  }, [selectedPeriod, balanceRevision]);
   const usageData = summary?.usage ?? [];
   const requests = summary?.requests ?? [];
   const average = summary?.requestCount
@@ -127,23 +128,16 @@ export default function Dashboard() {
               label="Баланс"
               value={summary ? rubles(summary.balance, 2) : undefined}
               loading={!summary && !error}
-              detail="Начисляется вручную"
             />
             <Metric
               label="Потрачено за всё время"
               value={summary ? rubles(summary.spent, 2) : undefined}
               loading={!summary && !error}
-              detail="Фактические списания"
             />
             <Metric
               label={`Токенов ${periodTitle}`}
               value={summary ? summary.tokens.toLocaleString("ru-RU") : undefined}
               loading={!summary && !error}
-              detail={
-                summary?.unknownUsageCount
-                  ? `Запросов без данных о расходе: ${summary.unknownUsageCount}`
-                  : "По данным ответов API"
-              }
             />
           </div>
         </section>
@@ -366,9 +360,6 @@ export default function Dashboard() {
                 Последние 20 запросов
               </p>
             </div>
-            <span className="rounded-full bg-white/[0.06] px-3 py-1.5 text-xs text-[#a5a5a1]">
-              История запросов
-            </span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[680px] border-collapse text-left text-sm">
@@ -459,7 +450,11 @@ export default function Dashboard() {
         </section>
         <CreditHistory summary={summary} loading={!summary && !error} />
       </div>
-      <TopUpModal open={topUpOpen} onClose={() => setTopUpOpen(false)} />
+      <TopUpModal
+        open={topUpOpen}
+        onClose={() => setTopUpOpen(false)}
+        onPaid={() => setBalanceRevision((value) => value + 1)}
+      />
     </main>
   );
 }
@@ -468,12 +463,10 @@ function Metric({
   label,
   value,
   loading = false,
-  detail,
 }: {
   label: string;
   value?: string;
   loading?: boolean;
-  detail: string;
 }) {
   return (
     <div className="rounded-[14px] bg-[#242424] px-4 py-4">
@@ -481,7 +474,6 @@ function Metric({
       <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
         {loading ? <Skeleton className="h-7 w-28" /> : value ?? "Недоступно"}
       </p>
-      <p className="mt-1 text-[11px] text-[#777875]">{detail}</p>
     </div>
   );
 }
