@@ -5,6 +5,7 @@ export const IMAGES = {
     LANDING: "/images/landing.png",
     CRYPTOBOT: "/images/cryptobot.png",
     SBP: "/images/sbp.png",
+    TELEGRAM: "/images/telegram.png",
   },
   AI: {
     OPENAI: "/ai/gpt.png",

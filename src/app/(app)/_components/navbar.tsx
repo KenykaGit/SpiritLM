@@ -1,9 +1,10 @@
-import { Show, UserButton } from "@clerk/nextjs";
+import { Show } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { IMAGES } from "../../../configs/paths/images.paths";
 import { PATHS } from "../../../configs/paths/pages.paths";
 import { Button } from "@/components/ui/button";
+import { UserMenuButton } from "@/components/user-menu-button";
 
 export function Navbar() {
   return (
@@ -28,7 +29,7 @@ export function Navbar() {
           </Button>
         </Show>
         <Show when="signed-in">
-          <UserButton />
+          <UserMenuButton />
         </Show>
       </nav>
     </header>

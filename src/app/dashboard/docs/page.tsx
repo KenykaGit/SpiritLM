@@ -3,6 +3,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { docsCode } from "@/configs/consts/docs.const";
 import { API_URL } from "@/configs/consts/api.const";
+import { LINKS } from "@/configs/paths/links.paths";
 import { PATHS } from "@/configs/paths/pages.paths";
 import {
   ChatGuide,
@@ -64,6 +65,12 @@ export default async function DashboardDocsPage() {
                 href={PATHS.DASHBOARD.MODELS}
                 className="inline-flex min-h-11 items-center rounded-xl bg-white/[0.07] px-4 py-2 text-sm font-medium text-[#f3f2ee] transition-colors hover:bg-white/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
               >Каталог моделей</Link>
+              <a
+                href={LINKS.TELEGRAM_SUPPORT}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-11 items-center rounded-xl bg-white/[0.07] px-4 py-2 text-sm font-medium text-[#f3f2ee] transition-colors hover:bg-white/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
+              >Поддержка в Telegram</a>
             </div>
           </div>
         </header>

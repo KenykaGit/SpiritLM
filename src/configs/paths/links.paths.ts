@@ -1,5 +1,6 @@
 export const LINKS = {
-  TELEGRAM: "t.me/spiritlm",
+  TELEGRAM_CHANNEL: "https://t.me/SpiritLM_AI",
+  TELEGRAM_SUPPORT: "https://t.me/SpiritLM_Support",
   DOCS: {
     OPENAI_SDK: "https://developers.openai.com/api/docs/libraries",
     CODEX: "https://learn.chatgpt.com/docs/config-file/config-advanced",

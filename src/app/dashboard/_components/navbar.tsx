@@ -1,8 +1,8 @@
-import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { IMAGES } from "@/configs/paths/images.paths";
 import { PATHS } from "@/configs/paths/pages.paths";
+import { UserMenuButton } from "@/components/user-menu-button";
 
 export function Navbar() {
   return (
@@ -21,7 +21,7 @@ export function Navbar() {
         />
       </Link>
 
-      <UserButton />
+      <UserMenuButton />
     </header>
   );
 }
