@@ -31,7 +31,7 @@ npm run db:migrate
 
 Миграции находятся в `prisma/migrations`. Команда `db:migrate` применяет только сохранённые миграции к базе из `DATABASE_URL`; запускать отдельно перед развёртыванием. `migrate reset` и `db push` для рабочей базы не использовать.
 
-На NixOS для CLI можно задать локальную переменную `PRISMA_SCHEMA_ENGINE_BINARY` с путём к установленному `schema-engine`, соответствующему Prisma 7.8. Приложение использует JavaScript-драйвер MariaDB и не требует нативного движка запросов. Эту локальную переменную не переносить на Vercel.
+На NixOS для CLI можно задать локальную переменную `PRISMA_SCHEMA_ENGINE_BINARY` с путём к установленному `schema-engine`, соответствующему Prisma 7.8. Приложение использует JavaScript-драйвер MariaDB и не требует нативного движка запросов. Эту локальную переменную не переносить на Netlify или Vercel.
 
 ## Ручное начисление баланса
 
@@ -159,7 +159,10 @@ SSR и API routes обрабатываются Next.js adapter, который N
    directory. Команда сборки — `npm run build`, папка публикации — `.next`.
 2. В **Project configuration → Environment variables** добавьте переменные ниже
    для Production и Deploy Previews, где это необходимо. Не копируйте `.env.local`
-   в репозиторий и не задавайте `DATABASE_ADMIN_URL` в Netlify.
+   в репозиторий, не задавайте `DATABASE_ADMIN_URL` и удалите
+   `PRISMA_SCHEMA_ENGINE_BINARY` из переменных Netlify, если она там есть. Это
+   локальная настройка NixOS; её путь `/run/current-system/sw/bin/schema-engine`
+   недоступен в окружении Netlify и ломает `prisma generate` при установке.
 3. Разрешите сетевой доступ к MariaDB с серверов Netlify и используйте отдельного
    пользователя приложения. Хост базы должен быть доступен из интернета и
    поддерживать TLS; добавьте `sslaccept=strict` в `DATABASE_URL`.
