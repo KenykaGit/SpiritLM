@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build"
+  command = "echo '[SpiritLM] Netlify build command started' && npm run build"
   publish = ".next"
 
 [build.environment]
