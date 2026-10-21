@@ -149,6 +149,54 @@ npm run proxy:smoke -- user_CLERK_ID --stream
 
 `npm run build` в этой рабочей сессии не запускается согласно AGENTS.md.
 
+## Netlify
+
+Проект можно подключить к Netlify как Next.js-приложение: App Router, middleware,
+SSR и API routes обрабатываются Next.js adapter, который Netlify подключает
+автоматически. Настройки сборки зафиксированы в `netlify.toml`.
+
+1. Запушьте проект в GitHub/GitLab и в Netlify создайте сайт через **Add new
+   project → Import an existing project**. Укажите корень репозитория как Base
+   directory. Команда сборки — `npm run build`, папка публикации — `.next`.
+2. В **Project configuration → Environment variables** добавьте переменные ниже
+   для Production и Deploy Previews, где это необходимо. Не копируйте `.env.local`
+   в репозиторий и не задавайте `DATABASE_ADMIN_URL` в Netlify.
+3. Разрешите сетевой доступ к MariaDB с серверов Netlify и используйте отдельного
+   пользователя приложения. Хост базы должен быть доступен из интернета и
+   поддерживать TLS; добавьте `sslaccept=strict` в `DATABASE_URL`.
+4. Примените миграции к production базе из доверенной машины с production
+   `DATABASE_URL`: `npm run db:migrate`. Затем запустите первый deploy.
+5. После назначения домена обновите Clerk: добавьте домен в разрешённые домены
+   приложения и выставьте адрес сайта как production URL. Проверьте вход, каталог,
+   `/v1/models` и тестовый запрос через API.
+
+Обязательные переменные Netlify:
+
+- `DATABASE_URL` — отдельная production MariaDB; не используйте локальный
+  адрес `localhost`.
+- `CHEAPVIBE_API_KEY` — серверный ключ поставщика.
+- `CLERK_SECRET_KEY` и `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` — ключи production
+  экземпляра Clerk.
+- `NEXT_PUBLIC_CLERK_SIGN_IN_URL=/auth/sign-in` и
+  `NEXT_PUBLIC_CLERK_SIGN_UP_URL=/auth/sign-up`.
+- `NEXT_PUBLIC_API=https://ваш-домен/v1` — публичный URL этого сайта с `/v1`;
+  после смены домена нужен новый deploy.
+
+Для CryptoBot дополнительно задайте `CRYPTO_BOT_MODE` и соответствующий токен;
+оставьте эти переменные пустыми, если пополнения не нужны. `DATABASE_ADMIN_URL`
+используется только для первоначальной настройки базы и не требуется приложению.
+
+Учитывайте лимит функций Netlify: синхронная обработка и потоковый ответ могут
+работать не дольше 60 секунд. В SpiritLM таймаут генерации — 90 секунд, а
+Next.js routes объявляют `maxDuration = 120`; генерация, которая длится дольше
+лимита Netlify, может завершиться обрывом ответа. Для реального API трафика
+выберите платформу с поддержкой нужной длительности или отдельно сократите
+таймауты приложения до лимита хостинга.
+
+Для CryptoBot webhook задайте URL `https://ваш-домен/api/payments/cryptobot/webhook`.
+Периодическую сверку `npm run payments:reconcile` настройте в отдельном
+планировщике раз в минуту: Netlify не запускает этот локальный скрипт автоматически.
+
 ## Vercel
 
 Передать в Environment Variables серверные `DATABASE_URL`, `CHEAPVIBE_API_KEY`, `CLERK_SECRET_KEY` и публичные настройки Clerk/API. Применить миграции отдельно; при установке зависимостей Prisma Client генерируется через postinstall. Настроить доступ MariaDB с инфраструктуры Vercel и подходящие правила Clerk для домена.
