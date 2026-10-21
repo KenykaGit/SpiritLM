@@ -34,7 +34,7 @@ export function CodeBlock({ title, value }: { title: string; value: string }) {
           onClick={() => void copyCode()}
           aria-label={copied ? "Код скопирован" : "Скопировать код"}
           title={copied ? "Скопировано" : "Скопировать"}
-          className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-[#a5a5a1] transition-colors hover:bg-white/[0.07] hover:text-[#ffe02e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
+          className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-[#a5a5a1] transition-colors hover:bg-white/[0.07] hover:text-[#ffe02e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
         >
           {copied ? (
             <IconCheck aria-hidden="true" size={16} stroke={1.8} />
@@ -45,9 +45,11 @@ export function CodeBlock({ title, value }: { title: string; value: string }) {
       </figcaption>
       <div className="relative">
         <pre
+          tabIndex={0}
+          aria-label={title}
           className={
-            "whitespace-pre-wrap break-words px-4 py-3 text-[13px] leading-6 text-[#e4e3de] " +
-            (isLong && !expanded ? "max-h-[22rem] overflow-hidden" : "")
+            "overflow-x-auto whitespace-pre px-4 py-3 text-[13px] leading-6 text-[#e4e3de] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#ffe02e] " +
+            (isLong && !expanded ? "max-h-[22rem] overflow-y-hidden pb-14" : "")
           }
         >
           <code>{visibleValue}</code>

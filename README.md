@@ -48,6 +48,8 @@ npm run balance:credit -- user_CLERK_ID 1000 payment-20261020-001 "Пополн�
 
 ## API и текущий статус
 
+Подробная пользовательская документация находится в кабинете на `/dashboard/docs`: эндпоинты, коды ошибок, curl, Python/JavaScript SDK и настройка агентов.
+
 - `GET /v1/models` — доступные модели SpiritLM; нужен Bearer-ключ SpiritLM.
 - `POST /v1/chat/completions` — контракт Chat Completions, включая SSE. Для запроса резервируется баланс, затем списывается цена по usage.
 - `/api/dashboard/keys` — управление собственными ключами через сессию Clerk.
