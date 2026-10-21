@@ -217,7 +217,7 @@ export function TopUpModal({ open, onClose, onPaid }: TopUpModalProps) {
             type="button"
             variant="outline"
             aria-pressed={true}
-            className="min-h-14 gap-2 rounded-xl border-[#ffe02e]/30 bg-[#ffe02e]/10 px-3 !text-[#ffe02e] hover:border-[#ffe02e]/40 hover:bg-[#ffe02e]/15 motion-reduce:transition-none"
+            className="min-h-14 gap-2 rounded-xl !border-0 bg-[#ffe02e]/10 px-3 !text-[#ffe02e] hover:!border-0 hover:bg-[#ffe02e]/15 motion-reduce:transition-none"
           >
             <Image
               src={IMAGES.IMAGES.CRYPTOBOT}
