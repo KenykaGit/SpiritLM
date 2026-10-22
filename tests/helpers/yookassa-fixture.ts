@@ -83,7 +83,7 @@ export async function withYooKassaFixture(
           remote.paid = true;
           remote.captured_at = new Date().toISOString();
         }
-        if (provider.rejectCancellation || remote.status === "succeeded") {
+        if (provider.rejectCancellation || remote.status !== "waiting_for_capture") {
           return Response.json({ private: "private-error" }, { status: 400 });
         }
         remote.status = "canceled";

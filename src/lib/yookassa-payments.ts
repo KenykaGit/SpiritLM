@@ -218,7 +218,33 @@ export async function cancelYooKassaPaymentForUser(
   }
 
   const path = `payments/${encodeURIComponent(payment.providerId)}`;
-  let remote: YooKassaPaymentObject;
+  let remote = await yooKassaRequest(config, path, yooKassaPaymentSchema);
+  const applyRemote = async (current: YooKassaPaymentObject) => {
+    if (
+      current.id !== payment.providerId ||
+      current.metadata.spiritlm_payment_id !== payment.id
+    ) {
+      throw new ApiError(502, "payment_mismatch", "Данные платежа не совпадают");
+    }
+    return unwrapAction(
+      await applyYookassaPayment({
+        mode: config.mode,
+        shopId: config.shopId,
+        payment: current,
+      }),
+    );
+  };
+  const current = await applyRemote(remote);
+  if (["PAID", "CANCELLED"].includes(current.status)) return summarize(current);
+  // Redirect payments cannot be canceled while the customer has not paid.
+  // Only an authorized two-stage payment can be canceled through this API.
+  if (remote.status !== "waiting_for_capture") {
+    throw new ApiError(
+      409,
+      "payment_not_cancellable",
+      "ЮKassa не разрешает отменять неоплаченный счёт. Если не оплачивать его, он закроется автоматически.",
+    );
+  }
   let cancellationError: unknown;
   try {
     remote = await yooKassaRequest(config, `${path}/cancel`, yooKassaPaymentSchema, {
@@ -231,19 +257,7 @@ export async function cancelYooKassaPaymentForUser(
     // Read the provider directly, bypassing the background check throttle.
     remote = await yooKassaRequest(config, path, yooKassaPaymentSchema);
   }
-  if (
-    remote.id !== payment.providerId ||
-    remote.metadata.spiritlm_payment_id !== payment.id
-  ) {
-    throw new ApiError(502, "payment_mismatch", "Данные платежа не совпадают");
-  }
-  const latest = unwrapAction(
-    await applyYookassaPayment({
-      mode: config.mode,
-      shopId: config.shopId,
-      payment: remote,
-    }),
-  );
+  const latest = await applyRemote(remote);
   if (["PAID", "CANCELLED"].includes(latest.status)) return summarize(latest);
   if (cancellationError) throw cancellationError;
   throw new ApiError(409, "payment_not_cancellable", "Не удалось отменить счёт");

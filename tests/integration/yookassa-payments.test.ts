@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import { randomUUID } from "node:crypto";
 import { db } from "../../src/lib/db";
+import { ApiError } from "../../src/lib/api-error";
 import {
   createYooKassaPayment,
   yooKassaPaymentOverview,
@@ -109,9 +110,28 @@ async function allowCheck(id: string) {
   await db.yooKassaPayment.update({ where: { id }, data: { checkedAt: null } });
 }
 
-test("YooKassa cancellation checks ownership, confirms provider cancellation and allows a new invoice", async () =>
-  withYooKassaFixture(async ({ user, other, provider }) => {
+test("YooKassa pending cancellation explains the provider restriction without a cancel request", async () =>
+  withYooKassaFixture(async ({ user, provider }) => {
     const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
+    await assert.rejects(
+      cancelYooKassaPaymentForUser(user.id, payment.id),
+      (error: unknown) =>
+        error instanceof ApiError &&
+        error.status === 409 &&
+        error.code === "payment_not_cancellable" &&
+        error.message.includes("ЮKassa не разрешает отменять"),
+    );
+    assert.equal(provider.cancellations, 0);
+    assert.equal(
+      (await yooKassaPaymentOverview(user.id, payment.id)).payment?.status,
+      "PENDING",
+    );
+  }));
+
+test("YooKassa cancellation checks ownership, confirms provider cancellation and allows a new invoice", async () =>
+  withYooKassaFixture(async ({ user, other, provider, payments }) => {
+    const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
+    [...payments.values()][0].status = "waiting_for_capture";
     await assert.rejects(cancelYooKassaPaymentForUser(other.id, payment.id), /не найден/);
     assert.equal(provider.cancellations, 0);
     assert.equal(
@@ -133,8 +153,9 @@ test("YooKassa cancellation checks ownership, confirms provider cancellation and
   }));
 
 test("YooKassa cancellation reconciles a concurrent payment exactly once", async () =>
-  withYooKassaFixture(async ({ user, provider }) => {
+  withYooKassaFixture(async ({ user, provider, payments }) => {
     const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
+    [...payments.values()][0].status = "waiting_for_capture";
     provider.payOnCancellation = true;
     assert.equal(
       (await cancelYooKassaPaymentForUser(user.id, payment.id)).status,
@@ -151,26 +172,44 @@ test("YooKassa cancellation reconciles a concurrent payment exactly once", async
     );
   }));
 
-test("YooKassa cancellation recovers a lost provider response", async () =>
-  withYooKassaFixture(async ({ user, provider }) => {
+test("YooKassa cancellation detects an already paid pending invoice without canceling it", async () =>
+  withYooKassaFixture(async ({ user, provider, pay }) => {
     const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
+    pay();
+    assert.equal(
+      (await cancelYooKassaPaymentForUser(user.id, payment.id)).status,
+      "PAID",
+    );
+    assert.equal(provider.cancellations, 0);
+    assert.equal(
+      (await yooKassaPaymentOverview(user.id, payment.id)).testBalance,
+      "100.00",
+    );
+  }));
+
+test("YooKassa cancellation recovers a lost provider response", async () =>
+  withYooKassaFixture(async ({ user, provider, payments }) => {
+    const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
+    [...payments.values()][0].status = "waiting_for_capture";
     provider.loseCancellationResponse = true;
     assert.equal(
       (await cancelYooKassaPaymentForUser(user.id, payment.id)).status,
       "CANCELLED",
     );
-    assert.equal(provider.reads, 1);
+    assert.equal(provider.reads, 2);
   }));
 
 test("YooKassa rejected or unavailable cancellation keeps the payment pending", async () =>
-  withYooKassaFixture(async ({ user, provider }) => {
+  withYooKassaFixture(async ({ user, provider, payments }) => {
     const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
+    [...payments.values()][0].status = "waiting_for_capture";
     provider.rejectCancellation = true;
     await assert.rejects(cancelYooKassaPaymentForUser(user.id, payment.id));
     assert.equal(
       (await yooKassaPaymentOverview(user.id, payment.id)).payment?.status,
       "PENDING",
     );
+    assert.equal(provider.cancellations, 1);
     provider.unavailable = true;
     await assert.rejects(cancelYooKassaPaymentForUser(user.id, payment.id));
     assert.equal(
@@ -180,9 +219,10 @@ test("YooKassa rejected or unavailable cancellation keeps the payment pending", 
   }));
 
 test("YooKassa cancellation recovers a creating payment before cancelling it", async () =>
-  withYooKassaFixture(async ({ user, provider }) => {
+  withYooKassaFixture(async ({ user, provider, payments }) => {
     provider.loseResponse = true;
     const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
+    [...payments.values()][0].status = "waiting_for_capture";
     assert.equal(payment.status, "CREATING");
     await db.yooKassaPayment.update({
       where: { id: payment.id },

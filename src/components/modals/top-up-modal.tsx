@@ -6,7 +6,7 @@ import { PATHS } from "@/configs/paths/pages.paths";
 import { PAYMENT_LIMITS } from "@/configs/consts/payments.const";
 import type { PaymentOverview, PaymentSummary } from "@/configs/types/payments.types";
 import { dashboardFetch } from "@/lib/dashboard-client";
-import { IconCreditCard, IconWallet } from "@tabler/icons-react";
+import { IconWallet } from "@tabler/icons-react";
 import Image from "next/image";
 import toast from "react-hot-toast";
 import { useEffect, useRef, useState } from "react";
@@ -294,6 +294,25 @@ function TopUpPaymentForm({
         >
           <Button
             type="button"
+            variant="ghost"
+            aria-pressed={card}
+            disabled={submitting || checking || cancelling}
+            onClick={() => onMethodChange("bank_card")}
+            className={`min-h-14 gap-2 rounded-xl px-3 motion-reduce:transition-none ${card ? "bg-[#ffe02e]/10 !text-[#ffe02e] hover:bg-[#ffe02e]/15" : "bg-[#242424] !text-[#c6c6c1] hover:bg-[#30302e]"}`}
+          >
+            <Image
+              src={IMAGES.IMAGES.CARD}
+              alt=""
+              width={36}
+              height={24}
+              className="h-6 w-9 shrink-0 object-contain"
+            />
+            <span className="min-w-0 whitespace-normal text-left leading-tight">
+              Карта
+            </span>
+          </Button>
+          <Button
+            type="button"
             variant="outline"
             aria-pressed={!card}
             disabled={submitting || checking || cancelling}
@@ -308,19 +327,6 @@ function TopUpPaymentForm({
               className="size-7 shrink-0 object-contain"
             />
             CryptoBot
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            aria-pressed={card}
-            disabled={submitting || checking || cancelling}
-            onClick={() => onMethodChange("bank_card")}
-            className={`min-h-14 gap-2 rounded-xl px-3 motion-reduce:transition-none ${card ? "bg-[#ffe02e]/10 !text-[#ffe02e] hover:bg-[#ffe02e]/15" : "bg-[#242424] !text-[#c6c6c1] hover:bg-[#30302e]"}`}
-          >
-            <IconCreditCard aria-hidden="true" size={28} className="size-7 shrink-0" />
-            <span className="min-w-0 whitespace-normal text-left leading-tight">
-              Банковская карта
-            </span>
           </Button>
         </div>
         <p className="mb-2 text-xs font-medium text-[#c6c6c1]">Сумма, ₽</p>
@@ -384,7 +390,7 @@ function TopUpPaymentForm({
                 : "Уточняем статус создания счёта. Повторно создавать его не нужно. Можно закрыть окно и вернуться позже.")}
             {payment.status === "PENDING" &&
               (card
-                ? "Платёж создан. Оплатите его банковской картой на странице ЮKassa — статус обновится автоматически."
+                ? "Платёж создан. Оплатите его картой на странице ЮKassa — статус обновится автоматически."
                 : "Счёт создан. Оплатите его в Telegram — статус обновится автоматически.")}
             {payment.status === "CANCELLED" &&
               "Счёт отменён. Для пополнения можно создать новый счёт."}
@@ -413,7 +419,7 @@ function TopUpPaymentForm({
                 >
                   {checking ? "Проверяем…" : "Проверить оплату"}
                 </Button>
-                {(payment.status === "PENDING" || (card && pending)) && (
+                {!card && payment.status === "PENDING" && (
                   <Button
                     type="button"
                     variant="ghost"
