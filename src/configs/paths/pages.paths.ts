@@ -4,6 +4,9 @@ export const PATHS = {
     DASHBOARD: {
       SUMMARY: "/api/dashboard/summary",
       KEYS: "/api/dashboard/keys",
+      YOOKASSA_PAYMENTS: "/api/dashboard/payments/yookassa",
+      YOOKASSA_PAYMENT: (id: string) =>
+        `/api/dashboard/payments/yookassa/${encodeURIComponent(id)}`,
       PAYMENTS: "/api/dashboard/payments",
       PAYMENT: (id: string) => `/api/dashboard/payments/${encodeURIComponent(id)}`,
       KEY: (id: string) => `/api/dashboard/keys/${encodeURIComponent(id)}`,

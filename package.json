@@ -16,6 +16,7 @@
     "db:migrate": "prisma migrate deploy",
     "balance:credit": "tsx scripts/credit-balance.ts",
     "payments:reconcile": "tsx scripts/reconcile-payments.ts",
+    "payments:reconcile:yookassa": "tsx scripts/reconcile-yookassa-payments.ts",
     "payments:check": "tsx scripts/check-crypto-pay.ts",
     "proxy:smoke": "tsx scripts/smoke-proxy.ts",
     "test:unit": "node --import tsx --test tests/*.test.ts"

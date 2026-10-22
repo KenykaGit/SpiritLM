@@ -33,6 +33,6 @@ next-env.d.ts
 .codex
 .aws
 
-prisma/migrations
 docs
 !src/app/dashboard/docs
+migrations

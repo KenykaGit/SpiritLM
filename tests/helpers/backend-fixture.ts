@@ -109,6 +109,7 @@ export async function withBackendFixture(
     if (originalKey === undefined) delete process.env.CHEAPVIBE_API_KEY;
     else process.env.CHEAPVIBE_API_KEY = originalKey;
     if (users.length) {
+      await db.yooKassaPayment.deleteMany({ where: { userId: { in: users } } });
       await db.payment.deleteMany({ where: { userId: { in: users } } });
       await db.apiRequest.deleteMany({ where: { userId: { in: users } } });
       await db.balanceEntry.deleteMany({ where: { userId: { in: users } } });

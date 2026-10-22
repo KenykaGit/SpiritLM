@@ -39,6 +39,15 @@ export default function Dashboard() {
   const [balanceRevision, setBalanceRevision] = useState(0);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
+    if (
+      ["bank_card", "sbp"].includes(
+        new URLSearchParams(window.location.search).get("payment_method") ?? "",
+      )
+    ) {
+      setTopUpOpen(true);
+    }
+  }, []);
+  useEffect(() => {
     const controller = new AbortController();
     async function load() {
       try {

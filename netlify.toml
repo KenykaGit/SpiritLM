@@ -8,3 +8,6 @@
 
 [functions."crypto-reconcile"]
   schedule = "* * * * *"
+
+[functions."yookassa-reconcile"]
+  schedule = "* * * * *"

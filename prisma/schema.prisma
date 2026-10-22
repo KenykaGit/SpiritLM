@@ -17,6 +17,7 @@ model User {
   requests    ApiRequest[]
   entries     BalanceEntry[]
   payments    Payment[]
+  yooKassaPayments YooKassaPayment[]
 }
 
 model Payment {
@@ -111,4 +112,30 @@ model BalanceEntry {
   createdAt    DateTime  @default(now())
 
   @@index([userId, createdAt])
+}
+
+model YooKassaPayment {
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  requestId      String        @db.VarChar(36)
+  mode           String        @db.VarChar(4)
+  shopId         String        @db.VarChar(32)
+  idempotenceKey String        @unique @db.VarChar(64)
+  providerId     String?       @db.VarChar(64)
+  amount         Decimal       @db.Decimal(20, 8)
+  currency       String        @default("RUB") @db.VarChar(3)
+  returnUrl      String        @db.VarChar(2048)
+  invoiceUrl     String?       @db.VarChar(2048)
+  status         PaymentStatus @default(CREATING)
+  createdAt      DateTime      @default(now())
+  expiresAt      DateTime?
+  paidAt         DateTime?
+  creditedAt     DateTime?
+  checkedAt      DateTime?
+
+  @@unique([userId, mode, shopId, requestId])
+  @@unique([mode, shopId, providerId])
+  @@index([userId, mode, shopId, createdAt])
+  @@index([mode, shopId, creditedAt, checkedAt])
 }
