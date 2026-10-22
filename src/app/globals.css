@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @config "../../tailwind.config.ts";
+@source "./dashboard/docs";
 
 .cl-internal-560t1i,
 .cl-footerItem,

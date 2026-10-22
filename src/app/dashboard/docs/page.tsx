@@ -47,15 +47,15 @@ export default async function DashboardDocsPage() {
     >
       <div className="mx-auto max-w-[1340px]">
         <header className="mb-6 rounded-[20px] bg-[#1b1b1b] p-5 sm:p-7">
-          <div className="flex flex-wrap items-end justify-between gap-5">
-            <div className="max-w-2xl">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="min-w-0 flex-1 lg:max-w-2xl">
               <h1
                 id="dashboard-page-title"
                 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl"
               >Документация</h1>
               <p className="mt-3 text-sm leading-6 text-[#a5a5a1] sm:text-base">Подключите SpiritLM к своему приложению или агенту: эндпоинты, примеры запросов, SDK и настройки инструментов.</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex max-w-full flex-wrap justify-end gap-2 self-end lg:max-w-[50%]">
               <Link
                 href={PATHS.DASHBOARD.KEYS}
                 className="inline-flex min-h-11 items-center rounded-xl bg-[#ffe02e] px-4 py-2 text-sm font-semibold text-[#171717] transition-colors hover:bg-[#f1d326] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1b1b]"
@@ -73,9 +73,9 @@ export default async function DashboardDocsPage() {
             </div>
           </div>
         </header>
-        <div className="grid items-start gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="flex flex-col items-start gap-6 md:flex-row">
           <DocsNavigation />
-          <div className="min-w-0 space-y-4">
+          <div className="w-full min-w-0 flex-1 space-y-4">
             <ConnectionGuide
               baseUrl={baseUrl}
               code={code}
