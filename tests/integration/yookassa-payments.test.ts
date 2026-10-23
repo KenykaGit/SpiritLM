@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { after, test } from "node:test";
 import { randomUUID } from "node:crypto";
 import { db } from "../../src/lib/db";
-import { ApiError } from "../../src/lib/api-error";
 import {
   createYooKassaPayment,
   yooKassaPaymentOverview,
@@ -110,22 +109,72 @@ async function allowCheck(id: string) {
   await db.yooKassaPayment.update({ where: { id }, data: { checkedAt: null } });
 }
 
-test("YooKassa pending cancellation explains the provider restriction without a cancel request", async () =>
-  withYooKassaFixture(async ({ user, provider }) => {
+test("YooKassa pending cancellation dismisses the invoice and keeps late payments recoverable", async () =>
+  withYooKassaFixture(async ({ user, other, provider, pay }) => {
     const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
-    await assert.rejects(
-      cancelYooKassaPaymentForUser(user.id, payment.id),
-      (error: unknown) =>
-        error instanceof ApiError &&
-        error.status === 409 &&
-        error.code === "payment_not_cancellable" &&
-        error.message.includes("ЮKassa не разрешает отменять"),
-    );
+    await assert.rejects(cancelYooKassaPaymentForUser(other.id, payment.id), /не найден/);
+    const cancelled = await cancelYooKassaPaymentForUser(user.id, payment.id);
+    assert.equal(cancelled.status, "CANCELLED");
+    assert.equal(cancelled.invoiceUrl, null);
     assert.equal(provider.cancellations, 0);
     assert.equal(
-      (await yooKassaPaymentOverview(user.id, payment.id)).payment?.status,
-      "PENDING",
+      (await yooKassaPaymentOverview(user.id)).payment?.status,
+      "CANCELLED",
     );
+    await allowCheck(payment.id);
+    await reconcilePendingYooKassaPayments();
+    assert.equal(
+      (await yooKassaPaymentOverview(user.id)).payment?.status,
+      "CANCELLED",
+    );
+    pay();
+    await allowCheck(payment.id);
+    await reconcilePendingYooKassaPayments();
+    assert.equal((await yooKassaPaymentOverview(user.id)).testBalance, "100.00");
+    await allowCheck(payment.id);
+    await reconcilePendingYooKassaPayments();
+    assert.equal((await yooKassaPaymentOverview(user.id)).testBalance, "100.00");
+  }));
+
+test("YooKassa invoices expire locally after ten minutes without losing a late payment", async () =>
+  withYooKassaFixture(async ({ user, provider, pay }) => {
+    const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
+    const stored = await db.yooKassaPayment.findUniqueOrThrow({ where: { id: payment.id } });
+    assert.equal(
+      new Date(payment.expiresAt!).getTime() - stored.createdAt.getTime(),
+      YOOKASSA.INVOICE_LIFETIME_MS,
+    );
+    await db.yooKassaPayment.update({
+      where: { id: payment.id },
+      data: { createdAt: new Date(Date.now() - YOOKASSA.INVOICE_LIFETIME_MS - 1) },
+    });
+    const expired = (await yooKassaPaymentOverview(user.id)).payment!;
+    assert.equal(expired.status, "EXPIRED");
+    assert.equal(expired.invoiceUrl, null);
+    pay();
+    await allowCheck(payment.id);
+    await reconcilePendingYooKassaPayments();
+    const paid = await yooKassaPaymentOverview(user.id);
+    assert.equal(paid.payment?.status, "PAID");
+    assert.equal(paid.testBalance, "100.00");
+    assert.equal(provider.creates, 1);
+  }));
+
+test("YooKassa dismissed and expired invoices do not block new invoices", async () =>
+  withYooKassaFixture(async ({ user }) => {
+    for (let index = 0; index < 3; index += 1) {
+      const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
+      await cancelYooKassaPaymentForUser(user.id, payment.id);
+    }
+    for (let index = 0; index < 3; index += 1) {
+      const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
+      await db.yooKassaPayment.update({
+        where: { id: payment.id },
+        data: { createdAt: new Date(Date.now() - YOOKASSA.INVOICE_LIFETIME_MS - 1) },
+      });
+    }
+    const payment = await createYooKassaPayment(user.id, "100", randomUUID(), origin);
+    assert.equal(payment.status, "PENDING");
   }));
 
 test("YooKassa cancellation checks ownership, confirms provider cancellation and allows a new invoice", async () =>
@@ -420,7 +469,7 @@ test("YooKassa background recovery settles closed-tab payments and preserves can
     );
   }));
 
-test("YooKassa temporary errors and incomplete recovery never invent final statuses", async () =>
+test("YooKassa local expiry preserves unresolved provider recovery", async () =>
   withYooKassaFixture(async ({ user, provider, payments }) => {
     const payment = await createYooKassaPayment(user.id, "500", randomUUID(), origin);
     provider.unavailable = true;
@@ -444,8 +493,13 @@ test("YooKassa temporary errors and incomplete recovery never invent final statu
     await assert.rejects(yooKassaPaymentOverview(user.id, payment.id, true));
     assert.equal(
       (await yooKassaPaymentOverview(user.id, payment.id)).payment?.status,
-      "CREATING",
+      "EXPIRED",
     );
+    const unresolved = await db.yooKassaPayment.findUniqueOrThrow({
+      where: { id: payment.id },
+    });
+    assert.equal(unresolved.status, "CREATING");
+    assert.equal(unresolved.creditedAt, null);
     assert.equal(provider.posts, 1);
   }));
 

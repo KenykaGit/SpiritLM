@@ -130,6 +130,7 @@ model YooKassaPayment {
   status         PaymentStatus @default(CREATING)
   createdAt      DateTime      @default(now())
   expiresAt      DateTime?
+  dismissedAt    DateTime?
   paidAt         DateTime?
   creditedAt     DateTime?
   checkedAt      DateTime?

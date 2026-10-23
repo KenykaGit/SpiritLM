@@ -1,8 +1,9 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
+  prismaSchemaVersion?: string;
 };
 
 function createClient() {
@@ -24,8 +25,13 @@ function createClient() {
   return new PrismaClient({ adapter, log: [] });
 }
 
-export const db = globalForPrisma.prisma ?? createClient();
+// Regeneration can change fields while Next.js retains the previous client in memory.
+const schemaVersion = JSON.stringify(Prisma.dmmf.datamodel);
+export const db = globalForPrisma.prismaSchemaVersion === schemaVersion
+  ? globalForPrisma.prisma ?? createClient()
+  : createClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = db;
+  globalForPrisma.prismaSchemaVersion = schemaVersion;
 }

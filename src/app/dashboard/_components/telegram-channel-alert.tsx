@@ -28,7 +28,7 @@ export function TelegramChannelAlert() {
 
   return (
     <aside
-      className="sticky top-12 z-30 flex w-full items-center justify-center bg-[#4f9ee6] px-3 py-2 text-sm text-white shadow-lg shadow-black/25 sm:px-4"
+      className="sticky top-12 z-30 flex w-full items-center gap-2 bg-[#4f9ee6] py-2 pl-3 pr-12 text-sm text-white shadow-lg shadow-black/25 sm:pl-4"
       aria-label="Telegram-канал SpiritLM"
     >
       <Image
@@ -39,13 +39,13 @@ export function TelegramChannelAlert() {
         className="size-[22px] shrink-0"
         aria-hidden="true"
       />
-      <p className="flex min-w-0 items-center justify-center gap-2 px-2 text-center leading-5 text-white">
-        <span>Новости и обновления SpiritLM — в нашем</span>
+      <p className="min-w-0 text-left leading-5 text-white">
+        Новости и обновления SpiritLM — в нашем{" "}
         <a
           href={LINKS.TELEGRAM_CHANNEL}
           target="_blank"
           rel="noreferrer"
-          className="shrink-0 font-semibold text-white transition-colors hover:text-white/80 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          className="font-semibold text-white transition-colors hover:text-white/80 focus-visible:rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         >
           Telegram-канале
         </a>

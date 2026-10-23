@@ -18,10 +18,13 @@ import type { TopUpModalProps } from "@/configs/types/modals.types";
 type PaymentMethod = "cryptobot" | "bank_card";
 
 export function TopUpModal(props: TopUpModalProps) {
-  const [method, setMethod] = useState<PaymentMethod>("cryptobot");
+  const [method, setMethod] = useState<PaymentMethod>("bank_card");
   useEffect(() => {
+    if (!props.open) {
+      setMethod("bank_card");
+      return;
+    }
     if (
-      props.open &&
       ["bank_card", "sbp"].includes(
         new URLSearchParams(window.location.search).get("payment_method") ?? "",
       )
@@ -76,7 +79,9 @@ function TopUpPaymentForm({
   );
   const onPaidRef = useRef(onPaid);
   onPaidRef.current = onPaid;
-  const payment = overview?.payment;
+  const payment = overview?.payment?.status === "CANCELLED"
+    ? null
+    : overview?.payment;
   const paymentId = payment?.id;
   const pending = payment?.status === "PENDING" || payment?.status === "CREATING";
 
@@ -149,13 +154,29 @@ function TopUpPaymentForm({
   }, [open, paymentId, pending, loading, paymentPath, pollingPaused, checking, cancelling]);
 
   useEffect(() => {
+    if (!open || !card || !pending || !payment?.expiresAt) return;
+    const expiresAt = new Date(payment.expiresAt).getTime();
+    const timer = window.setTimeout(() => {
+      setOverview((previous) => {
+        if (!previous?.payment || previous.payment.id !== payment.id) return previous;
+        if (!["CREATING", "PENDING"].includes(previous.payment.status)) return previous;
+        return {
+          ...previous,
+          payment: { ...previous.payment, status: "EXPIRED", invoiceUrl: null },
+        };
+      });
+    }, Math.max(0, expiresAt - Date.now()));
+    return () => window.clearTimeout(timer);
+  }, [open, card, pending, payment]);
+
+  useEffect(() => {
     if (!open || !payment) return;
     const previous = observedPayment.current;
     observedPayment.current = { id: payment.id, status: payment.status };
     if (
       payment.status === "PAID" &&
       previous?.id === payment.id &&
-      (previous.status === "PENDING" || previous.status === "CREATING")
+      ["PENDING", "CREATING", "EXPIRED", "CANCELLED"].includes(previous.status)
     ) {
       toast.success(
         `Баланс пополнен на ${Number(payment.amount).toLocaleString("ru-RU")} ₽`,
@@ -174,11 +195,7 @@ function TopUpPaymentForm({
         tab.opener = null;
         tab.location.replace(payment.invoiceUrl);
       } else {
-        toast.error(
-          card
-            ? "Браузер заблокировал вкладку. Нажмите «Оплатить картой»."
-            : "Браузер заблокировал вкладку. Нажмите «Оплатить в Telegram».",
-        );
+        toast.error("Браузер заблокировал вкладку. Нажмите «Перейти к оплате».");
       }
     } else if (payment.status !== "CREATING") {
       redirectAfterCreation.current = false;
@@ -257,8 +274,15 @@ function TopUpPaymentForm({
         { method: "DELETE" },
       );
       setOverview((previous) =>
-        previous ? { ...previous, payment: data.payment } : previous,
+        previous
+          ? {
+              ...previous,
+              payment: data.payment.status === "CANCELLED" ? null : data.payment,
+            }
+          : previous,
       );
+      requestId.current = null;
+      setPollingPaused(false);
     } catch (failure) {
       setPollingPaused(true);
       setError(failure instanceof Error ? failure.message : "Не удалось отменить счёт");
@@ -419,7 +443,7 @@ function TopUpPaymentForm({
                 >
                   {checking ? "Проверяем…" : "Проверить оплату"}
                 </Button>
-                {!card && payment.status === "PENDING" && (
+                {payment.status === "PENDING" && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -457,13 +481,13 @@ function TopUpPaymentForm({
           {payment?.status === "PENDING" && payment.invoiceUrl ? (
             <Button asChild size="sm" className="rounded-lg px-4 text-sm">
               <a href={payment.invoiceUrl} target="_blank" rel="noopener noreferrer">
-                {card ? "Оплатить картой" : "Оплатить в Telegram"}
+                Перейти к оплате
               </a>
             </Button>
           ) : (
             <Button
               type="button"
-              disabled={loading || submitting || pending || !validAmount || !overview}
+              disabled={loading || submitting || cancelling || checking || pending || !validAmount || !overview}
               onClick={() => void createInvoice()}
               size="sm"
               className="rounded-lg bg-[#ffe02e] px-4 text-sm font-semibold text-[#171717] transition-colors hover:bg-[#ffcc36] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1b1b] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
@@ -476,7 +500,7 @@ function TopUpPaymentForm({
                     : "Уточняем статус…"
                   : submitting
                     ? "Создаём счёт…"
-                    : "Перейти к оплате"}
+                    : "Пополнить"}
             </Button>
           )}
         </div>

@@ -1,5 +1,6 @@
 import type { YooKassaPayment } from "@prisma/client";
 import { z } from "zod";
+import { dismissYookassaPayment } from "@/actions/dismiss-yookassa-payment";
 import { failYookassaPayment } from "@/actions/fail-yookassa-payment";
 import { reserveYookassaPayment } from "@/actions/reserve-yookassa-payment";
 import { getYookassaPayment } from "@/actions/get-yookassa-payment";
@@ -21,13 +22,23 @@ import { unwrapAction } from "./create-safe-action";
 import { ApiError } from "./api-error";
 
 function summarize(payment: YooKassaPayment): PaymentSummary {
+  const expiresAt = new Date(
+    payment.createdAt.getTime() + YOOKASSA.INVOICE_LIFETIME_MS,
+  );
+  const pending = ["CREATING", "PENDING"].includes(payment.status);
+  const status =
+    pending && payment.dismissedAt
+      ? "CANCELLED"
+      : pending && expiresAt.getTime() <= Date.now()
+        ? "EXPIRED"
+        : payment.status;
   return {
     id: payment.id,
     mode: "test",
     amount: payment.amount.toFixed(2),
-    status: payment.status,
-    invoiceUrl: payment.invoiceUrl,
-    expiresAt: payment.expiresAt?.toISOString() ?? null,
+    status,
+    invoiceUrl: status === "PENDING" ? payment.invoiceUrl : null,
+    expiresAt: expiresAt.toISOString(),
   };
 }
 
@@ -239,11 +250,9 @@ export async function cancelYooKassaPaymentForUser(
   // Redirect payments cannot be canceled while the customer has not paid.
   // Only an authorized two-stage payment can be canceled through this API.
   if (remote.status !== "waiting_for_capture") {
-    throw new ApiError(
-      409,
-      "payment_not_cancellable",
-      "ЮKassa не разрешает отменять неоплаченный счёт. Если не оплачивать его, он закроется автоматически.",
-    );
+    // Dismiss locally while reconciliation continues until the provider's final status.
+    // A late successful payment must still credit the account exactly once.
+    return summarize(unwrapAction(await dismissYookassaPayment(scope)));
   }
   let cancellationError: unknown;
   try {

@@ -35,4 +35,6 @@ next-env.d.ts
 
 docs
 !src/app/dashboard/docs
-migrations
+
+# local database migrations
+migrations/
