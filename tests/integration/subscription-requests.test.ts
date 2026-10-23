@@ -129,7 +129,7 @@ test("Nova excludes expensive models and fallback always requires permission", a
 test("subscription concurrency is shared across keys and cannot fall back around a rate limit", async () =>
   withBackendFixture(async ({ user, key }) => {
     await db.user.update({ where: { id: user.id }, data: { balance: 1000 } });
-    await buySubscription(user.id);
+    const period = await buySubscription(user.id);
     await db.apiKey.update({
       where: { id: key.id },
       data: { useSubscription: true, allowBalanceFallback: true },
@@ -138,13 +138,15 @@ test("subscription concurrency is shared across keys and cannot fall back around
       useSubscription: true,
       allowBalanceFallback: true,
     });
-    const results = await Promise.all([
-      beginApiRequest(input(user.id, key.id)),
-      beginApiRequest(input(user.id, another.id)),
-    ]);
+    const results = await Promise.all(
+      Array.from(
+        { length: period.concurrentRequests + 1 },
+        (_, index) => beginApiRequest(input(user.id, index % 2 ? another.id : key.id)),
+      ),
+    );
     assert.equal(
       results.filter((r) => r.data).length,
-      1,
+      period.concurrentRequests,
       JSON.stringify(results),
     );
     assert.equal(

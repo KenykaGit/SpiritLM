@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "../../src/lib/db";
 import { proxyChat } from "../../src/lib/chat-proxy";
 import { ApiError } from "../../src/lib/api-error";
+import { PROXY_LIMITS } from "../../src/configs/consts/proxy.const";
 
 import { withBackendFixture } from "../helpers/backend-fixture";
 
@@ -54,15 +55,19 @@ test("concurrency limit and cancellation finalize request records", async () =>
       new Response('data: {"choices":[{"delta":{"content":"partial"}}]}\n\n', {
         headers: { "Content-Type": "text/event-stream" },
       });
-    const first = await proxyChat({ ...body, stream: true }, context);
-    const second = await proxyChat({ ...body, stream: true }, context);
-    await assert.rejects(
-      proxyChat(body, context),
-      (error: unknown) => error instanceof ApiError && error.status === 429,
-    );
-    await first.response.body!.cancel();
-    await second.response.body!.cancel();
-    await Promise.all([first.completion, second.completion]);
+    const running: Awaited<ReturnType<typeof proxyChat>>[] = [];
+    try {
+      for (let index = 0; index < PROXY_LIMITS.CONCURRENT_REQUESTS; index += 1) {
+        running.push(await proxyChat({ ...body, stream: true }, context));
+      }
+      await assert.rejects(
+        proxyChat(body, context),
+        (error: unknown) => error instanceof ApiError && error.status === 429,
+      );
+    } finally {
+      await Promise.all(running.map((result) => result.response.body!.cancel()));
+      await Promise.all(running.map((result) => result.completion));
+    }
     assert.equal(
       await db.apiRequest.count({
         where: { userId: user.id, status: "RUNNING" },
@@ -103,12 +108,16 @@ test("concurrent admission never exceeds the running request limit", async () =>
       price: "0.90",
       reservation: "0",
     };
-    assert.ok((await beginApiRequest(input)).data);
-    const results = await Promise.all([
-      beginApiRequest(input),
-      beginApiRequest(input),
-    ]);
-    assert.equal(results.filter((result) => result.data).length, 1);
+    const results = await Promise.all(
+      Array.from(
+        { length: PROXY_LIMITS.CONCURRENT_REQUESTS + 1 },
+        () => beginApiRequest(input),
+      ),
+    );
+    assert.equal(
+      results.filter((result) => result.data).length,
+      PROXY_LIMITS.CONCURRENT_REQUESTS,
+    );
     assert.equal(
       results.filter((result) => result.code === "rate_limit_exceeded").length,
       1,
@@ -117,6 +126,6 @@ test("concurrent admission never exceeds the running request limit", async () =>
       await db.apiRequest.count({
         where: { userId: user.id, status: "RUNNING" },
       }),
-      2,
+      PROXY_LIMITS.CONCURRENT_REQUESTS,
     );
   }));
