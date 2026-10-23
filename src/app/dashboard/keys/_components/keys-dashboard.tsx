@@ -1,5 +1,6 @@
 "use client";
 
+import type { ApiKeyFundingSettings } from "@/configs/types/subscriptions.types";
 import { PATHS } from "@/configs/paths/pages.paths";
 
 import {
@@ -58,12 +59,12 @@ export function KeysDashboard() {
     return () => controller.abort();
   }, []);
 
-  async function createKey(name: string) {
+  async function createKey(name: string, settings: ApiKeyFundingSettings) {
     await toast.promise(
       (async () => {
         const result = await dashboardFetch<IssuedApiKey>(
           PATHS.API.DASHBOARD.KEYS,
-          { method: "POST", body: JSON.stringify({ name }) },
+          { method: "POST", body: JSON.stringify({ name, ...settings }) },
         );
         setKeys((current) => [
           {
@@ -74,6 +75,9 @@ export function KeysDashboard() {
             lastUsedAt: null,
             requests: 0,
             spent: "0",
+            subscriptionCreditsUsed: "0",
+            useSubscription: result.useSubscription,
+            allowBalanceFallback: result.allowBalanceFallback,
           },
           ...current,
         ]);
@@ -91,6 +95,37 @@ export function KeysDashboard() {
         error: (failure) => failure.message,
       },
     );
+  }
+
+  async function updateFunding(
+    key: ApiKeySummary,
+    settings: ApiKeyFundingSettings,
+  ) {
+    if (pendingKey) return;
+    setPendingKey(key.id);
+    setKeys((current) =>
+      current.map((item) =>
+        item.id === key.id ? { ...item, ...settings } : item,
+      ),
+    );
+    try {
+      await dashboardFetch(PATHS.API.DASHBOARD.KEY(key.id), {
+        method: "PATCH",
+        body: JSON.stringify(settings),
+      });
+      toast.success("Настройки ключа сохранены");
+    } catch (failure) {
+      setKeys((current) =>
+        current.map((item) => (item.id === key.id ? key : item)),
+      );
+      toast.error(
+        failure instanceof Error
+          ? failure.message
+          : "Не удалось сохранить настройки",
+      );
+    } finally {
+      setPendingKey(null);
+    }
   }
 
   async function copySecret() {
@@ -219,14 +254,16 @@ export function KeysDashboard() {
               loading={loading}
             />
             <Metric
-              label="Списания за месяц"
+              label="Расход API-баланса за месяц"
               value={loading || error ? undefined : formatRubles(totalSpent)}
               loading={loading}
             />
             <Metric
               label="Запросы за месяц"
               value={
-                loading || error ? undefined : totalRequests.toLocaleString("ru-RU")
+                loading || error
+                  ? undefined
+                  : totalRequests.toLocaleString("ru-RU")
               }
               loading={loading}
             />
@@ -250,12 +287,14 @@ export function KeysDashboard() {
               {loading || error ? (
                 <Skeleton className="h-4 w-8" />
               ) : (
-                <>{keys.length}{" "}
-              {keys.length === 1
-                ? "ключ"
-                : keys.length > 1 && keys.length < 5
-                  ? "ключа"
-                  : "ключей"}</>
+                <>
+                  {keys.length}{" "}
+                  {keys.length === 1
+                    ? "ключ"
+                    : keys.length > 1 && keys.length < 5
+                      ? "ключа"
+                      : "ключей"}
+                </>
               )}
             </span>
           </div>
@@ -263,7 +302,10 @@ export function KeysDashboard() {
           {loading ? (
             <ul className="list-none p-0" aria-label="Загрузка ключей">
               {[0, 1, 2].map((row) => (
-                <li key={row} className="border-t border-white/[0.06] px-5 py-4 sm:px-6">
+                <li
+                  key={row}
+                  className="border-t border-white/[0.06] px-5 py-4 sm:px-6"
+                >
                   <div className="grid gap-4 lg:grid-cols-[minmax(220px,1.5fr)_minmax(320px,1.3fr)_auto] lg:items-center">
                     <Skeleton className="h-5 w-40" />
                     <Skeleton className="h-4 w-56" />
@@ -273,10 +315,7 @@ export function KeysDashboard() {
               ))}
             </ul>
           ) : error ? (
-            <p
-              className="px-5 py-8 text-sm text-[#a5a5a1]"
-              role="alert"
-            >
+            <p className="px-5 py-8 text-sm text-[#a5a5a1]" role="alert">
               {error}
             </p>
           ) : keys.length > 0 ? (
@@ -340,6 +379,42 @@ export function KeysDashboard() {
                             </p>
                           </>
                         )}
+                        <div className="mt-3 space-y-1">
+                          <label className="flex min-h-11 items-center gap-2 text-xs text-[#d0d0cb]">
+                            <input
+                              type="checkbox"
+                              checked={key.useSubscription}
+                              disabled={pendingKey !== null}
+                              onChange={(event) =>
+                                void updateFunding(key, {
+                                  useSubscription: event.target.checked,
+                                  allowBalanceFallback: event.target.checked
+                                    ? key.allowBalanceFallback
+                                    : false,
+                                })
+                              }
+                              className="accent-[#ffe02e]"
+                            />
+                            Использовать подписку
+                          </label>
+                          <label className="flex min-h-11 items-center gap-2 text-xs text-[#a5a5a1]">
+                            <input
+                              type="checkbox"
+                              checked={key.allowBalanceFallback}
+                              disabled={
+                                pendingKey !== null || !key.useSubscription
+                              }
+                              onChange={(event) =>
+                                void updateFunding(key, {
+                                  useSubscription: key.useSubscription,
+                                  allowBalanceFallback: event.target.checked,
+                                })
+                              }
+                              className="accent-[#ffe02e]"
+                            />
+                            Если пакет недоступен — API-баланс
+                          </label>
+                        </div>
                         <p className="mt-1 text-[11px] text-[#777875]">
                           Создан{" "}
                           {new Date(key.createdAt).toLocaleDateString("ru-RU")}
@@ -347,34 +422,44 @@ export function KeysDashboard() {
                       </div>
                     </div>
 
-                    <dl className="grid grid-cols-2 gap-3 rounded-xl bg-[#242424]/70 px-3 py-2.5 sm:grid-cols-3 lg:bg-transparent lg:px-0 lg:py-0">
-                      <div>
-                        <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
-                          Списания
-                        </dt>
-                        <dd className="mt-1 text-sm font-medium tabular-nums text-[#f3f2ee]">
-                          {formatRubles(Number(key.spent))}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
-                          Запросы
-                        </dt>
-                        <dd className="mt-1 text-sm tabular-nums text-[#d0d0cb]">
-                          {key.requests.toLocaleString("ru-RU")}
-                        </dd>
-                      </div>
-                      <div className="col-span-2 sm:col-span-1">
-                        <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
-                          Последнее использование
-                        </dt>
-                        <dd className="mt-1 text-xs text-[#d0d0cb]">
-                          {key.lastUsedAt
-                            ? new Date(key.lastUsedAt).toLocaleString("ru-RU")
-                            : "Ещё не использовался"}
-                        </dd>
-                      </div>
-                    </dl>
+                    <div>
+                      <p className="mb-2 text-xs text-[#a5a5a1]">
+                        Подписка:{" "}
+                        {Number(key.subscriptionCreditsUsed).toLocaleString(
+                          "ru-RU",
+                          { maximumFractionDigits: 8 },
+                        )}{" "}
+                        кредитов
+                      </p>
+                      <dl className="grid grid-cols-2 gap-3 rounded-xl bg-[#242424]/70 px-3 py-2.5 sm:grid-cols-3 lg:bg-transparent lg:px-0 lg:py-0">
+                        <div>
+                          <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
+                            API-баланс
+                          </dt>
+                          <dd className="mt-1 text-sm font-medium tabular-nums text-[#f3f2ee]">
+                            {formatRubles(Number(key.spent))}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
+                            Запросы
+                          </dt>
+                          <dd className="mt-1 text-sm tabular-nums text-[#d0d0cb]">
+                            {key.requests.toLocaleString("ru-RU")}
+                          </dd>
+                        </div>
+                        <div className="col-span-2 sm:col-span-1">
+                          <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
+                            Последнее использование
+                          </dt>
+                          <dd className="mt-1 text-xs text-[#d0d0cb]">
+                            {key.lastUsedAt
+                              ? new Date(key.lastUsedAt).toLocaleString("ru-RU")
+                              : "Ещё не использовался"}
+                          </dd>
+                        </div>
+                      </dl>
+                    </div>
 
                     <div className="flex items-center gap-1 lg:justify-end">
                       {issuedSecrets[key.id] ? (
@@ -517,7 +602,7 @@ function Metric({
     <div className="rounded-[14px] bg-[#242424] px-4 py-4">
       <p className="text-xs text-[#999994]">{label}</p>
       <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
-        {loading ? <Skeleton className="h-7 w-28" /> : value ?? "Недоступно"}
+        {loading ? <Skeleton className="h-7 w-28" /> : (value ?? "Недоступно")}
       </p>
     </div>
   );

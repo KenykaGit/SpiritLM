@@ -8,7 +8,7 @@ import type { InputType, ReturnType } from "./types";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
   const user = await dashboardUser();
-  const key = await issueKey(user.id, data.name);
+  const key = await issueKey(user.id, data.name, data);
   return { data: { ...key, createdAt: key.createdAt.toISOString() } };
 };
 

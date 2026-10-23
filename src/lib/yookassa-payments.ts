@@ -10,8 +10,14 @@ import { listPendingYookassaPayments } from "@/actions/list-pending-yookassa-pay
 import { yooKassaPaymentSchema } from "@/configs/schemas/yookassa.schema";
 import { YOOKASSA } from "@/configs/consts/yookassa.const";
 import { PAYMENT_LIMITS } from "@/configs/consts/payments.const";
-import type { PaymentOverview, PaymentSummary } from "@/configs/types/payments.types";
-import type { YooKassaConfig, YooKassaPaymentObject } from "@/configs/types/yookassa.types";
+import type {
+  PaymentOverview,
+  PaymentSummary,
+} from "@/configs/types/payments.types";
+import type {
+  YooKassaConfig,
+  YooKassaPaymentObject,
+} from "@/configs/types/yookassa.types";
 import {
   requireYooKassaBankCard,
   yooKassaConfig,
@@ -44,18 +50,29 @@ function summarize(payment: YooKassaPayment): PaymentSummary {
 
 async function submitPayment(payment: YooKassaPayment, config: YooKassaConfig) {
   const paymentMethod = yooKassaPaymentMethod(payment.returnUrl);
-  const remote = await yooKassaRequest(config, "payments", yooKassaPaymentSchema, {
-    key: payment.idempotenceKey,
-    body: {
-      amount: { value: payment.amount.toFixed(2), currency: payment.currency },
-      payment_method_data: { type: paymentMethod },
-      capture: true,
-      confirmation: { type: "redirect", return_url: payment.returnUrl },
-      description:
-        paymentMethod === "sbp" ? YOOKASSA.LEGACY_SBP_DESCRIPTION : YOOKASSA.DESCRIPTION,
-      metadata: { spiritlm_payment_id: payment.id },
+  const remote = await yooKassaRequest(
+    config,
+    "payments",
+    yooKassaPaymentSchema,
+    {
+      key: payment.idempotenceKey,
+      body: {
+        amount: {
+          value: payment.amount.toFixed(2),
+          currency: payment.currency,
+        },
+        payment_method_data: { type: paymentMethod },
+        capture: true,
+        confirmation: { type: "redirect", return_url: payment.returnUrl },
+        description: payment.subscriptionOrderId
+          ? "Тестовая подписка SpiritLM на 30 дней"
+          : paymentMethod === "sbp"
+            ? YOOKASSA.LEGACY_SBP_DESCRIPTION
+            : YOOKASSA.DESCRIPTION,
+        metadata: { spiritlm_payment_id: payment.id },
+      },
     },
-  });
+  );
   if (remote.metadata.spiritlm_payment_id !== payment.id) {
     throw new ApiError(502, "payment_mismatch", "Данные платежа не совпадают");
   }
@@ -73,6 +90,7 @@ export async function createYooKassaPayment(
   amount: string,
   requestId: string,
   origin: string,
+  subscriptionOrderId?: string,
 ): Promise<PaymentSummary> {
   const config = yooKassaConfig();
   const existing = unwrapAction(
@@ -92,7 +110,13 @@ export async function createYooKassaPayment(
       requestId,
       mode: config.mode,
       shopId: config.shopId,
-      returnUrl: new URL("/dashboard?payment_method=bank_card", origin).toString(),
+      subscriptionOrderId,
+      returnUrl: new URL(
+        subscriptionOrderId
+          ? `/dashboard/subscription?payment_method=bank_card&order=${encodeURIComponent(subscriptionOrderId)}`
+          : "/dashboard?payment_method=bank_card",
+        origin,
+      ).toString(),
     }),
   );
   if (!created) {
@@ -112,7 +136,10 @@ export async function createYooKassaPayment(
   } catch (error) {
     // The provider may already have accepted the payment. Keep its identity
     // and recover using the persisted idempotency key, never a fresh key.
-    if (error instanceof ApiError && error.code === "yookassa_creation_rejected") {
+    if (
+      error instanceof ApiError &&
+      error.code === "yookassa_creation_rejected"
+    ) {
       // Only a definitive rejection of the first attempt can close a reservation.
       // A recovery failure must never discard an earlier accepted payment.
       unwrapAction(await failYookassaPayment({ id: payment.id }));
@@ -128,10 +155,16 @@ export async function reconcileYooKassaPayment(
   force = false,
 ): Promise<void> {
   if (payment.mode !== config.mode || payment.shopId !== config.shopId) {
-    throw new ApiError(409, "payment_environment", "Окружение платежа не совпадает");
+    throw new ApiError(
+      409,
+      "payment_environment",
+      "Окружение платежа не совпадает",
+    );
   }
-  if (payment.creditedAt || ["CANCELLED", "FAILED"].includes(payment.status)) return;
-  if (!force && !unwrapAction(await claimYookassaCheck({ id: payment.id }))) return;
+  if (payment.creditedAt || ["CANCELLED", "FAILED"].includes(payment.status))
+    return;
+  if (!force && !unwrapAction(await claimYookassaCheck({ id: payment.id })))
+    return;
   if (payment.providerId) {
     const remote = await yooKassaRequest(
       config,
@@ -142,7 +175,11 @@ export async function reconcileYooKassaPayment(
       remote.id !== payment.providerId ||
       remote.metadata.spiritlm_payment_id !== payment.id
     ) {
-      throw new ApiError(502, "payment_mismatch", "Данные платежа не совпадают");
+      throw new ApiError(
+        502,
+        "payment_mismatch",
+        "Данные платежа не совпадают",
+      );
     }
     unwrapAction(
       await applyYookassaPayment({
@@ -160,10 +197,14 @@ export async function reconcileYooKassaPayment(
   // After the idempotency retention window POST could create a second charge.
   // Scan the original time range instead; incomplete recovery never closes it.
   let cursor: string | undefined;
-  const to = new Date(payment.createdAt.getTime() + YOOKASSA.CREATE_RECOVERY_MS);
+  const to = new Date(
+    payment.createdAt.getTime() + YOOKASSA.CREATE_RECOVERY_MS,
+  );
   for (let page = 0; page < PAYMENT_LIMITS.RECOVERY_PAGES; page += 1) {
     const query = new URLSearchParams({
-      "created_at.gte": new Date(payment.createdAt.getTime() - 60_000).toISOString(),
+      "created_at.gte": new Date(
+        payment.createdAt.getTime() - 60_000,
+      ).toISOString(),
       "created_at.lte": to.toISOString(),
       limit: String(PAYMENT_LIMITS.PAGE_SIZE),
       ...(cursor ? { cursor } : {}),
@@ -180,7 +221,10 @@ export async function reconcileYooKassaPayment(
       const identity = z
         .object({ metadata: z.object({ spiritlm_payment_id: z.string() }) })
         .safeParse(item);
-      if (!identity.success || identity.data.metadata.spiritlm_payment_id !== payment.id)
+      if (
+        !identity.success ||
+        identity.data.metadata.spiritlm_payment_id !== payment.id
+      )
         continue;
       const remote = yooKassaPaymentSchema.safeParse(item);
       if (!remote.success)
@@ -215,17 +259,23 @@ export async function cancelYooKassaPaymentForUser(
   const config = yooKassaConfig();
   const scope = { userId, id, mode: config.mode, shopId: config.shopId };
   let { payment } = unwrapAction(await getYookassaPayment(scope));
-  if (!payment) throw new ApiError(404, "payment_not_found", "Платёж не найден");
+  if (!payment)
+    throw new ApiError(404, "payment_not_found", "Платёж не найден");
   if (payment.status === "CREATING") {
     await reconcileYooKassaPayment(payment, config, true);
     payment = unwrapAction(await getYookassaPayment(scope)).payment;
-    if (!payment) throw new ApiError(404, "payment_not_found", "Платёж не найден");
+    if (!payment)
+      throw new ApiError(404, "payment_not_found", "Платёж не найден");
   }
   if (["PAID", "CANCELLED", "FAILED", "EXPIRED"].includes(payment.status)) {
     return summarize(payment);
   }
   if (payment.status !== "PENDING" || !payment.providerId) {
-    throw new ApiError(409, "payment_not_cancellable", "Этот счёт пока нельзя отменить");
+    throw new ApiError(
+      409,
+      "payment_not_cancellable",
+      "Этот счёт пока нельзя отменить",
+    );
   }
 
   const path = `payments/${encodeURIComponent(payment.providerId)}`;
@@ -235,7 +285,11 @@ export async function cancelYooKassaPaymentForUser(
       current.id !== payment.providerId ||
       current.metadata.spiritlm_payment_id !== payment.id
     ) {
-      throw new ApiError(502, "payment_mismatch", "Данные платежа не совпадают");
+      throw new ApiError(
+        502,
+        "payment_mismatch",
+        "Данные платежа не совпадают",
+      );
     }
     return unwrapAction(
       await applyYookassaPayment({
@@ -256,10 +310,15 @@ export async function cancelYooKassaPaymentForUser(
   }
   let cancellationError: unknown;
   try {
-    remote = await yooKassaRequest(config, `${path}/cancel`, yooKassaPaymentSchema, {
-      key: `cancel-${payment.id}`,
-      body: {},
-    });
+    remote = await yooKassaRequest(
+      config,
+      `${path}/cancel`,
+      yooKassaPaymentSchema,
+      {
+        key: `cancel-${payment.id}`,
+        body: {},
+      },
+    );
   } catch (error) {
     cancellationError = error;
     // Payment may have completed, or cancellation may have succeeded before a timeout.
@@ -269,7 +328,11 @@ export async function cancelYooKassaPaymentForUser(
   const latest = await applyRemote(remote);
   if (["PAID", "CANCELLED"].includes(latest.status)) return summarize(latest);
   if (cancellationError) throw cancellationError;
-  throw new ApiError(409, "payment_not_cancellable", "Не удалось отменить счёт");
+  throw new ApiError(
+    409,
+    "payment_not_cancellable",
+    "Не удалось отменить счёт",
+  );
 }
 
 export async function yooKassaPaymentOverview(

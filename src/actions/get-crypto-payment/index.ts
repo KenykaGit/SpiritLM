@@ -8,7 +8,7 @@ import { ApiError } from "@/lib/api-error";
 const handler = async (data: InputType): Promise<ReturnType> => {
   const { id, ...scope } = data;
   const payment = await db.payment.findFirst({
-    where: { ...scope, ...(id ? { id } : {}) },
+    where: { ...scope, ...(id ? { id } : { subscriptionOrderId: null }) },
     orderBy: { createdAt: "desc" },
   });
   if (id && !payment) {
@@ -22,4 +22,3 @@ const handler = async (data: InputType): Promise<ReturnType> => {
 };
 
 export const getCryptoPayment = createSafeAction(InputSchema, handler);
-

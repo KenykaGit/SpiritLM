@@ -37,4 +37,5 @@ docs
 !src/app/dashboard/docs
 
 # local database migrations
-migrations/
+/migrations/
+*.sql

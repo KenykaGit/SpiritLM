@@ -14,11 +14,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
   const user = await db.user.findUniqueOrThrow({ where: { id: data.userId } });
   const now = new Date();
   const interval =
-    data.period === "2d"
-      ? "hour"
-      : data.period === "all"
-        ? "month"
-        : "day";
+    data.period === "2d" ? "hour" : data.period === "all" ? "month" : "day";
   const durationDays =
     data.period === "7d"
       ? 7
@@ -42,56 +38,63 @@ const handler = async (data: InputType): Promise<ReturnType> => {
     userId: user.id,
     ...(since ? { createdAt: { gte: since } } : {}),
   };
-  const [all, recent, requests, buckets, models, credits] = await Promise.all([
-    db.apiRequest.aggregate({
-      where: { userId: user.id },
-      _sum: { chargedCost: true },
-    }),
-    db.apiRequest.aggregate({
-      where: usageWhere,
-      _count: { _all: true, totalTokens: true },
-      _sum: {
-        totalTokens: true,
-        chargedCost: true,
-        inputTokens: true,
-        outputTokens: true,
-        cachedTokens: true,
-        reasoningTokens: true,
-      },
-    }),
-    db.apiRequest.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      take: DASHBOARD_HISTORY_LIMIT,
-      select: {
-        id: true,
-        model: true,
-        createdAt: true,
-        totalTokens: true,
-        chargedCost: true,
-        status: true,
-        diagnostic: true,
-      },
-    }),
-    db.apiRequest.findMany({
-      where: usageWhere,
-      select: { createdAt: true, totalTokens: true },
-      orderBy: { createdAt: "asc" },
-    }),
-    db.apiRequest.groupBy({
-      by: ["model"],
-      where: usageWhere,
-      _sum: { totalTokens: true },
-      _count: { _all: true },
-      orderBy: { _sum: { totalTokens: "desc" } },
-    }),
-    db.balanceEntry.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-      take: DASHBOARD_HISTORY_LIMIT,
-      select: { id: true, amount: true, note: true, createdAt: true },
-    }),
-  ]);
+  const [all, recent, requests, buckets, models, credits, funding] =
+    await Promise.all([
+      db.apiRequest.aggregate({
+        where: { userId: user.id, paymentSource: "BALANCE" },
+        _sum: { chargedCost: true },
+      }),
+      db.apiRequest.aggregate({
+        where: usageWhere,
+        _count: { _all: true, totalTokens: true },
+        _sum: {
+          totalTokens: true,
+          chargedCost: true,
+          inputTokens: true,
+          outputTokens: true,
+          cachedTokens: true,
+          reasoningTokens: true,
+        },
+      }),
+      db.apiRequest.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        take: DASHBOARD_HISTORY_LIMIT,
+        select: {
+          id: true,
+          model: true,
+          createdAt: true,
+          totalTokens: true,
+          chargedCost: true,
+          paymentSource: true,
+          status: true,
+          diagnostic: true,
+        },
+      }),
+      db.apiRequest.findMany({
+        where: usageWhere,
+        select: { createdAt: true, totalTokens: true },
+        orderBy: { createdAt: "asc" },
+      }),
+      db.apiRequest.groupBy({
+        by: ["model"],
+        where: usageWhere,
+        _sum: { totalTokens: true },
+        _count: { _all: true },
+        orderBy: { _sum: { totalTokens: "desc" } },
+      }),
+      db.balanceEntry.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        take: DASHBOARD_HISTORY_LIMIT,
+        select: { id: true, amount: true, note: true, createdAt: true },
+      }),
+      db.apiRequest.groupBy({
+        by: ["paymentSource"],
+        where: usageWhere,
+        _sum: { chargedCost: true },
+      }),
+    ]);
   const hourlyTokens = new Map<number, number>();
   for (const item of buckets) {
     const bucket = new Date(item.createdAt);
@@ -163,7 +166,14 @@ const handler = async (data: InputType): Promise<ReturnType> => {
     reasoningTokens: recent._sum.reasoningTokens ?? 0,
     requestCount: recent._count._all,
     unknownUsageCount: recent._count._all - recent._count.totalTokens,
-    cost: recent._sum.chargedCost?.toFixed(8) ?? "0",
+    cost:
+      funding
+        .find((item) => item.paymentSource === "BALANCE")
+        ?._sum.chargedCost?.toFixed(8) ?? "0",
+    subscriptionCreditsUsed:
+      funding
+        .find((item) => item.paymentSource === "SUBSCRIPTION")
+        ?._sum.chargedCost?.toFixed(8) ?? "0",
     models: models.map((item) => ({
       model: item.model,
       requests: item._count._all,

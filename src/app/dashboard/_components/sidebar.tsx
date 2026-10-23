@@ -11,6 +11,7 @@ const labels = {
   MODELS: "Модели",
   DOCS: "Документация",
   KEYS: "API-Ключи",
+  SUBSCRIPTION: "Подписка",
 };
 
 export function Sidebar() {
@@ -25,7 +26,7 @@ export function Sidebar() {
       aria-label="Навигация дашборда"
     >
       <nav
-        className="grid grid-cols-4 gap-1 md:flex md:flex-col"
+        className="grid grid-cols-5 gap-1 md:flex md:flex-col"
         aria-label="Разделы"
       >
         {DASHBOARD_NAV_ITEMS.map((item) => {

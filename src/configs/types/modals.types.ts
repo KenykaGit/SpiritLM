@@ -9,7 +9,10 @@ export type TopUpModalProps = {
 export type CreateApiKeyModalProps = {
   open: boolean;
   onClose: () => void;
-  onCreate: (name: string) => Promise<void> | void;
+  onCreate: (
+    name: string,
+    settings: import("./subscriptions.types").ApiKeyFundingSettings,
+  ) => Promise<void> | void;
 };
 
 export type ModalShellProps = {

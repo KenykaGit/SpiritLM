@@ -33,7 +33,7 @@ export function UsageDetails({
               {item.value === undefined && loading ? (
                 <Skeleton className="h-6 w-20" />
               ) : (
-                item.value?.toLocaleString("ru-RU") ?? "Недоступно"
+                (item.value?.toLocaleString("ru-RU") ?? "Недоступно")
               )}
             </dd>
           </div>
@@ -42,11 +42,23 @@ export function UsageDetails({
       <p className="mt-4 text-xs leading-5 text-[#858580]">
         Расход токенов указан без повторного учёта данных кэша.
       </p>
+      {summary && (
+        <p className="mt-3 text-sm text-[#d0d0cb]">
+          Расход подписки за период:{" "}
+          {Number(summary.subscriptionCreditsUsed).toLocaleString("ru-RU", {
+            maximumFractionDigits: 8,
+          })}{" "}
+          кредитов
+        </p>
+      )}
       <h3 className="mt-6 text-sm font-medium">По моделям</h3>
       {!summary && loading ? (
         <ul className="mt-3 space-y-3" aria-label="Загрузка моделей">
           {[0, 1, 2].map((row) => (
-            <li key={row} className="flex items-center justify-between gap-4 py-2">
+            <li
+              key={row}
+              className="flex items-center justify-between gap-4 py-2"
+            >
               <Skeleton className="h-4 w-40" />
               <Skeleton className="h-4 w-16" />
             </li>
@@ -55,9 +67,7 @@ export function UsageDetails({
       ) : !summary ? (
         <p className="mt-3 text-sm text-[#858580]">Недоступно</p>
       ) : !summary.models.length ? (
-        <p className="mt-3 text-sm text-[#858580]">
-          Пока нет запросов
-        </p>
+        <p className="mt-3 text-sm text-[#858580]">Пока нет запросов</p>
       ) : (
         <ul className="mt-2 divide-y divide-white/[0.06]">
           {summary.models.map((item) => (
@@ -103,7 +113,10 @@ export function CreditHistory({
       {!summary && loading ? (
         <ul className="mt-4 space-y-4" aria-label="Загрузка начислений">
           {[0, 1, 2].map((row) => (
-            <li key={row} className="flex items-center justify-between gap-4 py-2">
+            <li
+              key={row}
+              className="flex items-center justify-between gap-4 py-2"
+            >
               <div className="space-y-2">
                 <Skeleton className="h-4 w-44" />
                 <Skeleton className="h-3 w-28" />
@@ -115,9 +128,7 @@ export function CreditHistory({
       ) : !summary ? (
         <p className="mt-6 text-sm text-[#858580]">Недоступно</p>
       ) : !summary.credits.length ? (
-        <p className="mt-6 text-sm text-[#858580]">
-          Операций пока нет
-        </p>
+        <p className="mt-6 text-sm text-[#858580]">Операций пока нет</p>
       ) : (
         <ul className="mt-4 divide-y divide-white/[0.06]">
           {summary.credits.map((item) => (

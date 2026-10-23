@@ -1,5 +1,7 @@
 "use client";
 
+import { NOVA_EXCLUDED_MODELS } from "@/configs/consts/subscriptions.const";
+
 import Image from "next/image";
 import { IconCheck, IconCopy, IconSearch } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
@@ -35,19 +37,29 @@ export default function DashboardModelsPage() {
     })).filter((group) => group.models.length > 0);
   }, [frontierOnly, query]);
 
-  const resultCount = groups.reduce((total, group) => total + group.models.length, 0);
+  const resultCount = groups.reduce(
+    (total, group) => total + group.models.length,
+    0,
+  );
 
   return (
-    <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8" aria-labelledby="dashboard-page-title">
+    <main
+      className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8"
+      aria-labelledby="dashboard-page-title"
+    >
       <div className="mx-auto max-w-[1340px]">
         <div className="mb-8 rounded-[20px] border border-white/[0.04] bg-[#1b1b1b] p-5 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <h1 id="dashboard-page-title" className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h1
+                id="dashboard-page-title"
+                className="text-2xl font-semibold tracking-tight sm:text-3xl"
+              >
                 Каталог моделей
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-[#a5a5a1]">
-                Выберите модель для запросов через SpiritLM. Тарифы указаны за 1 млн токенов
+                Выберите модель для запросов через SpiritLM. Тарифы указаны за 1
+                млн токенов
               </p>
             </div>
             <label className="relative block w-full sm:w-72">
@@ -68,7 +80,10 @@ export default function DashboardModelsPage() {
             </label>
           </div>
 
-          <div className="mt-6 flex flex-wrap items-center gap-2" aria-label="Фильтр моделей">
+          <div
+            className="mt-6 flex flex-wrap items-center gap-2"
+            aria-label="Фильтр моделей"
+          >
             <button
               type="button"
               aria-pressed={!frontierOnly}
@@ -102,7 +117,10 @@ export default function DashboardModelsPage() {
         {groups.length > 0 ? (
           <div className="space-y-10">
             {groups.map((group) => (
-              <section key={group.provider} aria-labelledby={`provider-${group.provider}`}>
+              <section
+                key={group.provider}
+                aria-labelledby={`provider-${group.provider}`}
+              >
                 <div className="mb-4 flex items-center gap-3">
                   <div className="flex size-9 items-center justify-center rounded-xl bg-[#30302e] p-1.5">
                     <Image
@@ -111,11 +129,17 @@ export default function DashboardModelsPage() {
                       width={28}
                       height={28}
                       className={`size-full object-contain ${
-                        group.provider === "anthropic" || group.provider === "xai" ? "invert" : ""
+                        group.provider === "anthropic" ||
+                        group.provider === "xai"
+                          ? "invert"
+                          : ""
                       }`}
                     />
                   </div>
-                  <h2 id={`provider-${group.provider}`} className="text-lg font-semibold">
+                  <h2
+                    id={`provider-${group.provider}`}
+                    className="text-lg font-semibold"
+                  >
                     {group.name}
                   </h2>
                   <span className="rounded-full bg-[#30302e] px-2 py-0.5 text-xs text-[#a5a5a1]">
@@ -128,7 +152,9 @@ export default function DashboardModelsPage() {
                     <li key={model.id}>
                       <article className="group flex min-h-[142px] flex-col rounded-[15px] bg-[#1b1b1b] p-5 transition-colors hover:bg-[#222220]">
                         <div className="flex items-start justify-between gap-3">
-                          <h3 className="font-semibold leading-6 text-[#f3f2ee]">{model.name}</h3>
+                          <h3 className="font-semibold leading-6 text-[#f3f2ee]">
+                            {model.name}
+                          </h3>
                           <button
                             type="button"
                             onClick={() => void copyModelId(model.id)}
@@ -137,17 +163,36 @@ export default function DashboardModelsPage() {
                                 ? `ID модели ${model.name} скопирован`
                                 : `Скопировать ID модели ${model.name}`
                             }
-                            title={copiedModelId === model.id ? "Скопировано" : "Скопировать ID"}
+                            title={
+                              copiedModelId === model.id
+                                ? "Скопировано"
+                                : "Скопировать ID"
+                            }
                             className="inline-flex size-8 items-center justify-center rounded-lg text-[#999994] transition-colors hover:bg-white/[0.07] hover:text-[#ffe02e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
                           >
                             {copiedModelId === model.id ? (
-                              <IconCheck aria-hidden="true" size={16} stroke={1.8} />
+                              <IconCheck
+                                aria-hidden="true"
+                                size={16}
+                                stroke={1.8}
+                              />
                             ) : (
-                              <IconCopy aria-hidden="true" size={16} stroke={1.4} />
+                              <IconCopy
+                                aria-hidden="true"
+                                size={16}
+                                stroke={1.4}
+                              />
                             )}
                           </button>
                         </div>
-                        <p className="mt-1 break-all font-mono text-xs text-[#858580]">{model.id}</p>
+                        {NOVA_EXCLUDED_MODELS.includes(model.id) && (
+                          <p className="mt-2 text-xs text-[#ffe02e]">
+                            В подписке — с Vega. Также доступна с API-баланса.
+                          </p>
+                        )}
+                        <p className="mt-1 break-all font-mono text-xs text-[#858580]">
+                          {model.id}
+                        </p>
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#303943] px-2.5 py-1 text-xs text-[#d7dde5]">
                             <Image
@@ -177,7 +222,9 @@ export default function DashboardModelsPage() {
                           )}
                         </div>
                         <div className="mt-auto flex items-end justify-between gap-3 pt-5">
-                          <span className="text-xs text-[#999994]">Цена за 1 MTok</span>
+                          <span className="text-xs text-[#999994]">
+                            Цена за 1 MTok
+                          </span>
                           <span className="whitespace-nowrap text-sm font-semibold text-[#f3f2ee]">
                             {model.pricePerMillionTokens}
                           </span>
@@ -192,7 +239,9 @@ export default function DashboardModelsPage() {
         ) : (
           <div className="rounded-[15px] bg-[#1b1b1b] px-6 py-14 text-center">
             <p className="font-medium">Модели не найдены</p>
-            <p className="mt-2 text-sm text-[#999994]">Попробуйте изменить запрос или фильтр.</p>
+            <p className="mt-2 text-sm text-[#999994]">
+              Попробуйте изменить запрос или фильтр.
+            </p>
           </div>
         )}
       </div>

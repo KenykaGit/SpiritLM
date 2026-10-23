@@ -24,6 +24,7 @@ export const IMAGES = {
     AI: "/icons/ai.svg",
     DOCS: "/icons/docs.svg",
     KEY: "/icons/key.svg",
+    SUBSCRIPTION: "/icons/subscribe.svg",
   },
   AGENTS: {
     CLAUDE_CODE: "/agents/claudecode.webp",

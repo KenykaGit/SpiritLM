@@ -28,7 +28,14 @@ export async function POST(request: Request) {
     await dashboardUser(request);
     const body = await readJson(request, API_KEY_CONFIG.BODY_BYTES);
     return Response.json(
-      unwrapAction(await createKey({ name: keyName(body.name) })),
+      unwrapAction(
+        await createKey({
+          name: keyName(body.name),
+          useSubscription: body.useSubscription as boolean | undefined,
+          allowBalanceFallback: body.allowBalanceFallback as
+            boolean | undefined,
+        }),
+      ),
       {
         status: 201,
         headers: { "Cache-Control": "no-store" },

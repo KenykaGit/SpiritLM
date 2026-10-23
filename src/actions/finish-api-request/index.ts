@@ -3,6 +3,10 @@ import { createSafeAction } from "@/lib/create-safe-action";
 import { InputSchema } from "./schema";
 import type { InputType, ReturnType } from "./types";
 import { Prisma } from "@prisma/client";
+import {
+  requestReserve,
+  refundRequestReserve,
+} from "@/actions/request-accounting/transaction";
 import { serializableTransaction } from "@/lib/transaction";
 
 const handler = async (data: InputType): Promise<ReturnType> => {
@@ -12,16 +16,7 @@ const handler = async (data: InputType): Promise<ReturnType> => {
     });
     if (!request) return false;
 
-    const reserveEntry = request.diagnostic
-      ? null
-      : await tx.balanceEntry.findUnique({
-          where: {
-            operationId: `api-request:${request.id}:reserve`,
-          },
-          select: { amount: true },
-        });
-    const reservedCost =
-      reserveEntry?.amount.negated() ?? new Prisma.Decimal(0);
+    const reservedCost = await requestReserve(tx, request);
 
     const estimatedCost = data.usage
       ? request.pricePerMillion
@@ -31,13 +26,15 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       : null;
     const failedBeforeSuccessfulResponse =
       data.status === "FAILED" &&
-      (data.httpStatus === undefined || data.httpStatus < 200 || data.httpStatus >= 300);
+      (data.httpStatus === undefined ||
+        data.httpStatus < 200 ||
+        data.httpStatus >= 300);
     const chargedCost = request.diagnostic
       ? new Prisma.Decimal(0)
-      : estimatedCost ??
+      : (estimatedCost ??
         (failedBeforeSuccessfulResponse
           ? new Prisma.Decimal(0)
-          : reservedCost);
+          : reservedCost));
     const boundedCharge = Prisma.Decimal.min(chargedCost, reservedCost);
     const refund = reservedCost.sub(boundedCharge);
 
@@ -57,19 +54,12 @@ const handler = async (data: InputType): Promise<ReturnType> => {
     if (!result.count) return false;
 
     if (refund.gt(0)) {
-      await tx.user.update({
-        where: { id: request.userId },
-        data: { balance: { increment: refund } },
-      });
-      await tx.balanceEntry.create({
-        data: {
-          userId: request.userId,
-          operationId: `api-request:${request.id}:settlement`,
-          amount: refund,
-          note: `Возврат остатка резерва ${request.id}`,
-        },
-      });
-    } else if (!request.diagnostic && reservedCost.gt(0)) {
+      await refundRequestReserve(tx, request, refund);
+    } else if (
+      request.paymentSource === "BALANCE" &&
+      !request.diagnostic &&
+      reservedCost.gt(0)
+    ) {
       await tx.balanceEntry.updateMany({
         where: {
           operationId: `api-request:${request.id}:reserve`,

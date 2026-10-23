@@ -23,6 +23,7 @@ import type {
 } from "@/configs/types/api.types";
 import { dashboardFetch } from "@/lib/dashboard-client";
 import { CreditHistory, UsageDetails } from "./_components/usage-details";
+import { SubscriptionCard } from "./_components/subscription-card";
 import { Skeleton } from "./_components/skeleton";
 
 const chartConfig = {
@@ -80,7 +81,10 @@ export default function Dashboard() {
   const average = summary?.requestCount
     ? Math.round(summary.tokens / summary.requestCount)
     : 0;
-  const username = user?.username || user?.firstName || user?.primaryEmailAddress?.emailAddress?.split("@")[0];
+  const username =
+    user?.username ||
+    user?.firstName ||
+    user?.primaryEmailAddress?.emailAddress?.split("@")[0];
   const periodLabel =
     DASHBOARD_PERIOD_OPTIONS.find((period) => period.value === selectedPeriod)
       ?.label ?? "48 часов";
@@ -112,7 +116,9 @@ export default function Dashboard() {
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div>
               {isUserLoaded ? (
-                <p className="text-sm text-[#999994]">@{username ?? "Пользователь"}</p>
+                <p className="text-sm text-[#999994]">
+                  @{username ?? "Пользователь"}
+                </p>
               ) : (
                 <Skeleton className="h-4 w-28" />
               )}
@@ -139,17 +145,21 @@ export default function Dashboard() {
               loading={!summary && !error}
             />
             <Metric
-              label="Потрачено за всё время"
+              label="Расход API-баланса за всё время"
               value={summary ? rubles(summary.spent, 2) : undefined}
               loading={!summary && !error}
             />
             <Metric
               label={`Токенов ${periodTitle}`}
-              value={summary ? summary.tokens.toLocaleString("ru-RU") : undefined}
+              value={
+                summary ? summary.tokens.toLocaleString("ru-RU") : undefined
+              }
               loading={!summary && !error}
             />
           </div>
         </section>
+
+        <SubscriptionCard />
 
         <section className="mb-6" aria-label="Использование токенов">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -262,7 +272,8 @@ export default function Dashboard() {
                         indicator="line"
                         labelFormatter={(value) => {
                           const date = new Date(String(value));
-                          if (Number.isNaN(date.getTime())) return String(value);
+                          if (Number.isNaN(date.getTime()))
+                            return String(value);
 
                           if (selectedPeriod === "2d") {
                             return `${date.toLocaleString("ru-RU", {
@@ -312,28 +323,44 @@ export default function Dashboard() {
             </article>
             <article className="flex flex-col rounded-[18px] bg-[#1b1b1b] p-5 sm:p-6">
               <h2 className="text-base font-semibold">Токены {periodTitle}</h2>
-              <p className="mt-1 text-xs text-[#858580]">
-                {periodLabel} · UTC
-              </p>
+              <p className="mt-1 text-xs text-[#858580]">{periodLabel} · UTC</p>
               <div className="mt-6 space-y-5">
                 <div className="flex items-end justify-between gap-3">
                   <span className="text-sm text-[#a5a5a1]">Всего токенов</span>
                   <span className="text-2xl font-semibold tabular-nums">
-                    {summary ? summary.tokens.toLocaleString("ru-RU") : error ? "Недоступно" : <Skeleton className="h-7 w-24" />}
+                    {summary ? (
+                      summary.tokens.toLocaleString("ru-RU")
+                    ) : error ? (
+                      "Недоступно"
+                    ) : (
+                      <Skeleton className="h-7 w-24" />
+                    )}
                   </span>
                 </div>
                 <div className="h-px bg-white/[0.07]" />
                 <div className="flex items-end justify-between gap-3">
                   <span className="text-sm text-[#a5a5a1]">Запросы</span>
                   <span className="text-2xl font-semibold">
-                    {summary ? summary.requestCount.toLocaleString("ru-RU") : error ? "Недоступно" : <Skeleton className="h-7 w-16" />}
+                    {summary ? (
+                      summary.requestCount.toLocaleString("ru-RU")
+                    ) : error ? (
+                      "Недоступно"
+                    ) : (
+                      <Skeleton className="h-7 w-16" />
+                    )}
                   </span>
                 </div>
                 <div className="h-px bg-white/[0.07]" />
                 <div className="flex items-end justify-between gap-3">
                   <span className="text-sm text-[#a5a5a1]">Средний расход</span>
                   <span className="text-xl font-semibold sm:text-2xl">
-                    {summary ? average.toLocaleString("ru-RU") : error ? "Недоступно" : <Skeleton className="h-7 w-16" />}{" "}
+                    {summary ? (
+                      average.toLocaleString("ru-RU")
+                    ) : error ? (
+                      "Недоступно"
+                    ) : (
+                      <Skeleton className="h-7 w-16" />
+                    )}{" "}
                     <span className="text-xs font-normal text-[#858580] sm:text-sm">
                       токена / запрос
                     </span>
@@ -343,7 +370,13 @@ export default function Dashboard() {
                 <div className="flex items-end justify-between gap-3">
                   <span className="text-sm text-[#a5a5a1]">Расход средств</span>
                   <span className="text-2xl font-semibold">
-                    {summary ? rubles(summary.cost, 2) : error ? "Недоступно" : <Skeleton className="h-7 w-24" />}
+                    {summary ? (
+                      rubles(summary.cost, 2)
+                    ) : error ? (
+                      "Недоступно"
+                    ) : (
+                      <Skeleton className="h-7 w-24" />
+                    )}
                   </span>
                 </div>
               </div>
@@ -385,21 +418,32 @@ export default function Dashboard() {
               <tbody>
                 {!requests.length && summary && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-[#858580]">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-10 text-center text-[#858580]"
+                    >
                       Пока нет запросов
                     </td>
                   </tr>
                 )}
                 {!requests.length && error && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-10 text-center text-[#858580]">
+                    <td
+                      colSpan={6}
+                      className="px-6 py-10 text-center text-[#858580]"
+                    >
                       Статистика недоступна
                     </td>
                   </tr>
                 )}
-                {!requests.length && !summary && !error &&
+                {!requests.length &&
+                  !summary &&
+                  !error &&
                   [0, 1, 2].map((row) => (
-                    <tr key={`request-skeleton-${row}`} className="border-t border-white/[0.06]">
+                    <tr
+                      key={`request-skeleton-${row}`}
+                      className="border-t border-white/[0.06]"
+                    >
                       <td className="px-5 py-4 sm:px-6">
                         <Skeleton className="h-4 w-28" />
                       </td>
@@ -437,7 +481,9 @@ export default function Dashboard() {
                         : request.totalTokens.toLocaleString("ru-RU")}
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 text-right tabular-nums">
-                      {rubles(request.chargedCost)}
+                      {request.paymentSource === "SUBSCRIPTION"
+                        ? `${Number(request.chargedCost).toLocaleString("ru-RU", { maximumFractionDigits: 8 })} кр.`
+                        : rubles(request.chargedCost)}
                     </td>
                     <td className="whitespace-nowrap px-5 py-4 text-right sm:px-6">
                       <span
@@ -481,7 +527,7 @@ function Metric({
     <div className="rounded-[14px] bg-[#242424] px-4 py-4">
       <p className="text-xs text-[#999994]">{label}</p>
       <p className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
-        {loading ? <Skeleton className="h-7 w-28" /> : value ?? "Недоступно"}
+        {loading ? <Skeleton className="h-7 w-28" /> : (value ?? "Недоступно")}
       </p>
     </div>
   );

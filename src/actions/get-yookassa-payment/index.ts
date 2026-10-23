@@ -7,10 +7,14 @@ import { ApiError } from "@/lib/api-error";
 const handler = async (data: InputType): Promise<ReturnType> => {
   const { id, ...scope } = data;
   const payment = await db.yooKassaPayment.findFirst({
-    where: { ...scope, ...(id ? { id } : {}) },
+    where: {
+      ...scope,
+      ...(id ? { id } : data.requestId ? {} : { subscriptionOrderId: null }),
+    },
     orderBy: { createdAt: "desc" },
   });
-  if (id && !payment) throw new ApiError(404, "payment_not_found", "Платёж не найден");
+  if (id && !payment)
+    throw new ApiError(404, "payment_not_found", "Платёж не найден");
   const user = await db.user.findUniqueOrThrow({
     where: { id: data.userId },
     select: { testBalance: true },

@@ -6,8 +6,11 @@ import { ApiError } from "./api-error";
 
 export async function authenticateApiKey(request: Request) {
   const header = request.headers.get("authorization");
-  const bearer = header?.match(/^Bearer (sk-spiritlm-[A-Za-z0-9_-]{43})$/i)?.[1];
-  const apiKey = request.headers.get("x-api-key")
+  const bearer = header?.match(
+    /^Bearer (sk-spiritlm-[A-Za-z0-9_-]{43})$/i,
+  )?.[1];
+  const apiKey = request.headers
+    .get("x-api-key")
     ?.match(/^(sk-spiritlm-[A-Za-z0-9_-]{43})$/)?.[1];
   const secret = bearer ?? apiKey;
   if (!secret)
@@ -31,6 +34,12 @@ export function keyName(value: unknown) {
   return value.trim();
 }
 
-export async function issueKey(userId: string, name: string) {
-  return unwrapAction(await issue({ userId, name }));
+export async function issueKey(
+  userId: string,
+  name: string,
+  settings: Partial<
+    import("@/configs/types/subscriptions.types").ApiKeyFundingSettings
+  > = {},
+) {
+  return unwrapAction(await issue({ userId, name, ...settings }));
 }

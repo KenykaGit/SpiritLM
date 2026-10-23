@@ -4,6 +4,10 @@ import { InputSchema } from "./schema";
 import type { InputType, ReturnType } from "./types";
 import { Prisma } from "@prisma/client";
 import { serializableTransaction } from "@/lib/transaction";
+import {
+  fulfillSubscriptionOrder,
+  verifySubscriptionPayment,
+} from "@/actions/fulfill-subscription-order/transaction";
 import { ApiError } from "@/lib/api-error";
 import { yooKassaPaymentMethod } from "@/lib/yookassa";
 const handler = async (data: InputType): Promise<ReturnType> => {
@@ -16,7 +20,8 @@ const handler = async (data: InputType): Promise<ReturnType> => {
         shopId: data.shopId,
       },
     });
-    if (!payment) throw new ApiError(404, "payment_not_found", "Платёж не найден");
+    if (!payment)
+      throw new ApiError(404, "payment_not_found", "Платёж не найден");
     if (
       !remote.test ||
       remote.recipient.account_id !== data.shopId ||
@@ -25,17 +30,40 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       !payment.amount.equals(new Prisma.Decimal(remote.amount.value)) ||
       (payment.providerId !== null && payment.providerId !== remote.id)
     ) {
-      throw new ApiError(409, "payment_mismatch", "Данные платежа не совпадают");
+      throw new ApiError(
+        409,
+        "payment_mismatch",
+        "Данные платежа не совпадают",
+      );
     }
     if (payment.creditedAt) return payment;
-    if (remote.status === "succeeded" && (!remote.paid || !remote.captured_at)) {
-      throw new ApiError(409, "invalid_paid_payment", "Неполное подтверждение оплаты");
+    if (
+      remote.status === "succeeded" &&
+      (!remote.paid || !remote.captured_at)
+    ) {
+      throw new ApiError(
+        409,
+        "invalid_paid_payment",
+        "Неполное подтверждение оплаты",
+      );
     }
     if (remote.status === "succeeded") {
-      await tx.user.update({
-        where: { id: payment.userId },
-        data: { testBalance: { increment: payment.amount } },
-      });
+      if (payment.subscriptionOrderId) {
+        await verifySubscriptionPayment(
+          tx,
+          payment.subscriptionOrderId,
+          payment.userId,
+          data.mode,
+          "card",
+          payment.amount,
+          true,
+        );
+        await fulfillSubscriptionOrder(tx, payment.subscriptionOrderId);
+      } else
+        await tx.user.update({
+          where: { id: payment.userId },
+          data: { testBalance: { increment: payment.amount } },
+        });
     }
     return tx.yooKassaPayment.update({
       where: { id: payment.id },

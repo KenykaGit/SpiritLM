@@ -24,10 +24,21 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       data: {
         userId,
         name,
+        useSubscription: data.useSubscription ?? false,
+        allowBalanceFallback: data.useSubscription
+          ? (data.allowBalanceFallback ?? false)
+          : false,
         hash: hashKey(secret),
         prefix: secret.slice(0, API_KEY_CONFIG.DISPLAY_PREFIX_LENGTH),
       },
-      select: { id: true, name: true, prefix: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        prefix: true,
+        createdAt: true,
+        useSubscription: true,
+        allowBalanceFallback: true,
+      },
     });
   });
   return { data: { ...key, secret } };

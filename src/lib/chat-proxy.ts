@@ -143,8 +143,7 @@ function reservationForRequest(
   maxOutputTokens: number | undefined,
   pricePerMillion: string,
 ): string {
-  const requestedOutputTokens =
-    body.max_tokens ?? body.max_completion_tokens;
+  const requestedOutputTokens = body.max_tokens ?? body.max_completion_tokens;
   const outputTokens =
     typeof requestedOutputTokens === "number"
       ? requestedOutputTokens
@@ -184,7 +183,7 @@ export async function proxyChat(
       userId: context.userId,
       apiKeyId: context.apiKeyId,
       diagnostic: context.diagnostic,
-      model: body.model as string,
+      model: model.id,
       upstreamModel: model.upstreamId,
       streaming: body.stream === true,
       price: model.price.toFixed(),

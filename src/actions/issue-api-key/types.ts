@@ -5,5 +5,13 @@ import type { ApiKey } from "@prisma/client";
 export type InputType = z.infer<typeof InputSchema>;
 export type ReturnType = ActionState<
   InputType,
-  Pick<ApiKey, "id" | "name" | "prefix" | "createdAt"> & { secret: string }
+  Pick<
+    ApiKey,
+    | "id"
+    | "name"
+    | "prefix"
+    | "createdAt"
+    | "useSubscription"
+    | "allowBalanceFallback"
+  > & { secret: string }
 >;

@@ -20,12 +20,14 @@ const handler = async (): Promise<ReturnType> => {
         id: true,
         name: true,
         prefix: true,
+        useSubscription: true,
+        allowBalanceFallback: true,
         createdAt: true,
         lastUsedAt: true,
       },
     }),
     db.apiRequest.groupBy({
-      by: ["apiKeyId"],
+      by: ["apiKeyId", "paymentSource"],
       where: { userId: user.id, createdAt: { gte: month } },
       _count: { _all: true },
       _sum: { chargedCost: true },
@@ -33,13 +35,24 @@ const handler = async (): Promise<ReturnType> => {
   ]);
   return {
     data: keys.map((key) => {
-      const summary = usage.find((item) => item.apiKeyId === key.id);
+      const money = usage.find(
+        (item) => item.apiKeyId === key.id && item.paymentSource === "BALANCE",
+      );
+      const subscription = usage.find(
+        (item) =>
+          item.apiKeyId === key.id && item.paymentSource === "SUBSCRIPTION",
+      );
+      const requests = usage
+        .filter((item) => item.apiKeyId === key.id)
+        .reduce((sum, item) => sum + item._count._all, 0);
       return {
         ...key,
         createdAt: key.createdAt.toISOString(),
         lastUsedAt: key.lastUsedAt?.toISOString() ?? null,
-        requests: summary?._count._all ?? 0,
-        spent: summary?._sum.chargedCost?.toFixed(8) ?? "0",
+        requests,
+        spent: money?._sum.chargedCost?.toFixed(8) ?? "0",
+        subscriptionCreditsUsed:
+          subscription?._sum.chargedCost?.toFixed(8) ?? "0",
       };
     }),
   };

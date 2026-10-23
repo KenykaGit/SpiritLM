@@ -112,6 +112,15 @@ export async function withBackendFixture(
       await db.yooKassaPayment.deleteMany({ where: { userId: { in: users } } });
       await db.payment.deleteMany({ where: { userId: { in: users } } });
       await db.apiRequest.deleteMany({ where: { userId: { in: users } } });
+      await db.subscriptionEntry.deleteMany({
+        where: { period: { userId: { in: users } } },
+      });
+      await db.subscriptionPeriod.deleteMany({
+        where: { userId: { in: users } },
+      });
+      await db.subscriptionOrder.deleteMany({
+        where: { userId: { in: users } },
+      });
       await db.balanceEntry.deleteMany({ where: { userId: { in: users } } });
       await db.apiKey.deleteMany({ where: { userId: { in: users } } });
       await db.user.deleteMany({ where: { id: { in: users } } });
