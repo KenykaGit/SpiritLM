@@ -5,7 +5,7 @@ import { IMAGES } from "@/configs/paths/images.paths";
 
 export function Catalog() {
   return (
-    <section id="models">
+    <section id="models" className="bg-spirit-section">
       <div className="mx-auto max-w-5xl px-5 py-14 sm:px-7 lg:px-10 lg:py-16">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-5">
           <h2 className="font-heading text-4xl font-bold leading-tight tracking-tighter text-balance sm:text-5xl">

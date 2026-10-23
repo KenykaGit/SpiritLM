@@ -7,8 +7,9 @@ import { Icon } from "./icon";
 
 export function Header() {
   return (
-    <section className="mx-auto grid max-w-5xl gap-6 px-5 py-12 sm:px-7 lg:grid-cols-2 lg:items-center lg:gap-8 lg:px-10 lg:py-16">
-      <div className="relative z-10 max-w-xl">
+    <section>
+      <div className="mx-auto grid max-w-5xl gap-6 px-5 py-12 sm:px-7 lg:grid-cols-2 lg:items-center lg:gap-8 lg:px-10 lg:py-16">
+        <div className="relative z-10 max-w-xl">
         <h1 className="mb-4 font-heading text-5xl font-bold leading-none tracking-tighter text-balance sm:text-6xl lg:mb-5 lg:text-6xl">
           Одна точка входа
           <br />
@@ -23,11 +24,12 @@ export function Header() {
             <Icon name="arrow" size={17} />
           </Link>
         </Button>
-      </div>
+        </div>
 
-      <div className="relative grid min-h-96 place-items-center lg:min-h-0" aria-label="SpiritLM объединяет модели искусственного интеллекта">
-        <div className="relative h-96 w-full max-w-md sm:h-[28rem] sm:max-w-lg lg:h-[32rem]">
-          <Image src={IMAGES.IMAGES.LANDING} alt="Маскот SpiritLM с символами ИИ" fill priority sizes="(max-width: 40rem) 90vw, 46vw" className="object-contain drop-shadow-2xl" />
+        <div className="relative grid min-h-96 place-items-center lg:min-h-0" aria-label="SpiritLM объединяет модели искусственного интеллекта">
+          <div className="relative h-96 w-full max-w-md sm:h-[28rem] sm:max-w-lg lg:h-[32rem]">
+            <Image src={IMAGES.IMAGES.LANDING} alt="Маскот SpiritLM с символами ИИ" fill priority sizes="(max-width: 40rem) 90vw, 46vw" className="object-contain drop-shadow-2xl" />
+          </div>
         </div>
       </div>
     </section>

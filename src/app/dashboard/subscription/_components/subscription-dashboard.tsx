@@ -160,7 +160,7 @@ export function SubscriptionDashboard() {
               id="dashboard-page-title"
               className="text-2xl font-semibold tracking-tight sm:text-3xl"
             >
-              Подписка
+              SpiritLM Access
             </h1>
           </div>
           {error && (

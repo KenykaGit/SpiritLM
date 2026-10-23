@@ -3,7 +3,7 @@ import { AGENTS } from "@/configs/consts/agents.const";
 
 export function Agents() {
   return (
-    <section className="bg-spirit-section" id="agents">
+    <section id="agents">
       <div className="mx-auto max-w-5xl px-5 py-14 sm:px-7 lg:px-10 lg:py-16">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="font-heading text-4xl font-bold leading-tight tracking-tighter text-balance sm:text-5xl">
