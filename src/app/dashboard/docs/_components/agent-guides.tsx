@@ -258,7 +258,7 @@ export function VsCodeGuide({ code }: { code: DocsCode }) {
       <h3 className="mt-6 font-semibold text-[#f3f2ee]">Расширения Codex и Claude Code</h3>
       <p className="mt-3">
         Установка расширения не меняет требуемый API. Подключение Codex и Claude Code к SpiritLM пока
-        недоступно по тем же причинам, что и в CLI. Требования и условные настройки приведены в разделах
+        недоступно по тем же причинам, что и в CLI. Требования и условные настройки приведены в разделах{" "}
       <a
         href={PATHS.DOCS.CODEX}
         className="text-[#ffe02e] hover:underline"

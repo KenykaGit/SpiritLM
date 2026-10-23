@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { IconSparkles } from "@tabler/icons-react";
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/button";
@@ -238,29 +237,6 @@ export function SubscriptionDashboard() {
               </article>
             ))}
           </div>
-        </section>
-        <section
-          className="rounded-[15px] bg-[#1b1b1b] p-5 sm:p-6"
-          aria-labelledby="subscription-conditions-title"
-        >
-          <h2
-            id="subscription-conditions-title"
-            className="text-base font-semibold"
-          >
-            Как расходуется пакет
-          </h2>
-          <p className="mt-3 text-sm leading-6 text-[#a5a5a1]">
-            1 кредит = 1 ₽ по тарифам API. Пакет действует 30 дней без автопродления,
-            остаток не переносится. Следующий период начнётся после оплаченного.
-            Включите подписку в настройках{" "}
-            <Link
-              href={PATHS.DASHBOARD.KEYS}
-              className="text-[#ffe02e] underline focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
-            >
-              API-ключа
-            </Link>
-            .
-          </p>
         </section>
         {data && data.testPeriods.length > 0 && (
           <section className="rounded-[15px] bg-[#1b1b1b] p-6">

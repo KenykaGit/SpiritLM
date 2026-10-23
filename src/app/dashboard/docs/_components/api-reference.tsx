@@ -6,6 +6,7 @@ import { PATHS } from "@/configs/paths/pages.paths";
 import { CodeBlock } from "./code-block";
 import { DocsTable } from "./docs-table";
 import { GuideSection } from "./guide-section";
+import { SUBSCRIPTION_PLANS } from "@/configs/consts/subscriptions.const";
 
 const parameters = [
   ["model", "string · обязательно", "Полный ID модели SpiritLM, до 191 символа."],
@@ -242,6 +243,27 @@ export function LimitsGuide() {
           ["Загрузка каталога", `${CATALOG_TIMEOUT_MS / 1000} секунд`],
         ]}
       />
+      <DocsTable
+        caption="Лимиты генераций по тарифам"
+        columns={["Доступ", "Запросов в минуту", "Одновременно"]}
+        rows={[
+          ["Бесплатно / баланс", String(PROXY_LIMITS.REQUESTS_PER_MINUTE), String(PROXY_LIMITS.CONCURRENT_REQUESTS)],
+          ...Object.values(SUBSCRIPTION_PLANS).map((plan) => [
+            plan.name,
+            String(plan.requestsPerMinute),
+            String(plan.concurrentRequests),
+          ]),
+        ]}
+      />
+      <h3 className="mt-6 text-base font-semibold">Как расходуется пакет</h3>
+      <p className="mt-3">
+        1 кредит равен 1 ₽ по тарифу модели. Перед генерацией резервируется
+        оценка стоимости входа и максимального вывода; после ответа списывается
+        стоимость по фактическому usage, а остаток резерва возвращается.
+        Неизвестный расход не считается нулём — в таком случае резерв удерживается.
+        Пакет действует 30 дней, остаток не переносится и автопродления нет.
+        Следующая покупка добавляется после уже оплаченных периодов.
+      </p>
       <p className="mt-4">
         До генерации резервируется верхняя оценка стоимости входа и вывода. Поэтому доступного баланса должно
         хватать на резерв, даже если ожидаемый ответ короткий. Укажите разумный max_tokens: когда лимит
@@ -254,7 +276,7 @@ export function LimitsGuide() {
       </p>
       <p className="mt-3">
         При подтверждённой ошибке поставщика резерв возвращается. Если расход неизвестен, резерв
-        удерживается; неизвестный расход не считается нулём. Баланс и история запросов доступны в
+        удерживается; неизвестный расход не считается нулём. Баланс и история запросов доступны в{" "}
       <Link
         href={PATHS.DASHBOARD.ROOT}
         className="text-[#ffe02e] hover:underline"

@@ -24,7 +24,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanId, SubscriptionPlan> =
       amount: 990,
       credits: 1800,
       requestsPerMinute: 30,
-      concurrentRequests: 3,
+      concurrentRequests: 5,
     },
     sirius: {
       id: "sirius",
@@ -32,7 +32,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanId, SubscriptionPlan> =
       amount: 1990,
       credits: 3750,
       requestsPerMinute: 60,
-      concurrentRequests: 5,
+      concurrentRequests: 8,
     },
   };
 export const NOVA_EXCLUDED_MODELS: readonly string[] = [

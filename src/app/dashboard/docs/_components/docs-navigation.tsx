@@ -22,7 +22,7 @@ const groups = [
       [PATHS.DOCS.HERMES, "Hermes"],
       [PATHS.DOCS.KIMI_CODE, "Kimi Code"],
       [PATHS.DOCS.OPENCODE, "OpenCode"],
-      [PATHS.DOCS.VSCODE, "VS Code / Cline"],
+      [PATHS.DOCS.VSCODE, "VS Code (Cline)"],
       [PATHS.DOCS.TROUBLESHOOTING, "Если не подключается"],
     ],
   },
