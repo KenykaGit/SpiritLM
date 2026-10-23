@@ -15,6 +15,8 @@ import type {
 import { dashboardFetch } from "@/lib/dashboard-client";
 import { useSubscription } from "../../_components/use-subscription";
 import { SubscriptionStatus, credits, date } from "./subscription-status";
+import { SubscriptionThanksModal } from "./subscription-thanks-modal";
+import { useSubscriptionThanks } from "./use-subscription-thanks";
 import {
   SubscriptionHistorySkeleton,
   SubscriptionPlansSkeleton,
@@ -30,8 +32,16 @@ export function SubscriptionDashboard() {
   const [method, setMethod] = useState<SubscriptionMethod>("balance");
   const [pending, setPending] = useState(false);
   const [order, setOrder] = useState<SubscriptionOrderSummary | null>(null);
+  const { paidOrder, dismiss } = useSubscriptionThanks(data?.orders, order);
   const requestId = useRef<string | null>(null);
   const redirectAfterCheckout = useRef(false);
+
+  useEffect(() => {
+    if (paidOrder) {
+      redirectAfterCheckout.current = false;
+      setSelected(null);
+    }
+  }, [paidOrder]);
 
   const displayedOrder =
     data?.orders.find((item) => item.id === order?.id) ?? order;
@@ -102,11 +112,6 @@ export function SubscriptionDashboard() {
       );
       setOrder(result.order);
       if (result.order.status === "PAID") {
-        toast.success(
-          result.order.mode === "test"
-            ? "Тестовая подписка оформлена"
-            : "Подписка оплачена",
-        );
         setSelected(null);
       } else if (
         ["FAILED", "EXPIRED", "CANCELLED"].includes(result.order.status)
@@ -154,7 +159,7 @@ export function SubscriptionDashboard() {
     >
       <div className="mx-auto max-w-[1340px] space-y-6">
         <section className="space-y-6 rounded-[20px] bg-[#1b1b1b] p-5 sm:p-6">
-          <div>
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <h1
               id="dashboard-page-title"
               className="text-2xl font-semibold tracking-tight sm:text-3xl"
@@ -339,6 +344,11 @@ export function SubscriptionDashboard() {
           </ul>
         </section>
       </div>
+      <SubscriptionThanksModal
+        open={paidOrder !== null}
+        testMode={paidOrder?.mode === "test"}
+        onClose={dismiss}
+      />
       <ModalShell
         open={selected !== null}
         titleId="subscription-checkout-title"
