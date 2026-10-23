@@ -1,16 +1,16 @@
 "use client";
 
+import { formatBalance } from "@/lib/format-balance";
 import { SUGGESTED_TOP_UP_AMOUNTS } from "@/configs/consts/dashboard.const";
-import { IMAGES } from "@/configs/paths/images.paths";
 import { PATHS } from "@/configs/paths/pages.paths";
 import { PAYMENT_LIMITS } from "@/configs/consts/payments.const";
 import type { PaymentOverview, PaymentSummary } from "@/configs/types/payments.types";
 import { dashboardFetch } from "@/lib/dashboard-client";
 import { IconWallet } from "@tabler/icons-react";
-import Image from "next/image";
 import toast from "react-hot-toast";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { PaymentMethodSelector } from "./payment-method-selector";
 import { ModalShell } from "./modal-shell";
 
 import type { TopUpModalProps } from "@/configs/types/modals.types";
@@ -21,7 +21,6 @@ export function TopUpModal(props: TopUpModalProps) {
   const [method, setMethod] = useState<PaymentMethod>("bank_card");
   useEffect(() => {
     if (!props.open) {
-      setMethod("bank_card");
       return;
     }
     if (
@@ -68,12 +67,10 @@ function TopUpPaymentForm({
   const [submitting, setSubmitting] = useState(false);
   const [checking, setChecking] = useState(false);
   const [cancelling, setCancelling] = useState(false);
-  const [pollingPaused, setPollingPaused] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestId = useRef<string | null>(null);
   const creating = useRef(false);
   const redirectAfterCreation = useRef(false);
-  const paymentWindow = useRef<Window | null>(null);
   const observedPayment = useRef<{ id: string; status: PaymentSummary["status"] } | null>(
     null,
   );
@@ -88,16 +85,10 @@ function TopUpPaymentForm({
   useEffect(() => {
     if (!open) {
       redirectAfterCreation.current = false;
-      paymentWindow.current?.close();
-      paymentWindow.current = null;
       return;
     }
     const controller = new AbortController();
-    setLoading(true);
-    setPollingPaused(false);
     setError(null);
-    setOverview(null);
-    observedPayment.current = null;
     dashboardFetch<PaymentOverview>(paymentsPath, {
       signal: controller.signal,
     })
@@ -105,7 +96,6 @@ function TopUpPaymentForm({
         if (controller.signal.aborted) return;
         setOverview(data);
         if (data.payment) setAmount(data.payment.amount);
-        if (data.payment?.status === "PAID") onPaidRef.current?.();
       })
       .catch((failure: unknown) => {
         if (!controller.signal.aborted) {
@@ -121,7 +111,7 @@ function TopUpPaymentForm({
   }, [open, paymentsPath]);
 
   useEffect(() => {
-    if (!open || !paymentId || !pending || loading || pollingPaused || checking || cancelling)
+    if (!paymentId || !pending || loading || checking || cancelling)
       return;
     const controller = new AbortController();
     let timer: number | undefined;
@@ -141,8 +131,6 @@ function TopUpPaymentForm({
         setError(
           failure instanceof Error ? failure.message : "Не удалось проверить оплату",
         );
-        setPollingPaused(true);
-        return;
       }
       timer = window.setTimeout(() => void poll(), PAYMENT_LIMITS.POLL_MS);
     }
@@ -151,7 +139,7 @@ function TopUpPaymentForm({
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [open, paymentId, pending, loading, paymentPath, pollingPaused, checking, cancelling]);
+  }, [paymentId, pending, loading, paymentPath, checking, cancelling]);
 
   useEffect(() => {
     if (!open || !card || !pending || !payment?.expiresAt) return;
@@ -170,37 +158,29 @@ function TopUpPaymentForm({
   }, [open, card, pending, payment]);
 
   useEffect(() => {
-    if (!open || !payment) return;
+    if (!payment) return;
     const previous = observedPayment.current;
     observedPayment.current = { id: payment.id, status: payment.status };
     if (
       payment.status === "PAID" &&
-      previous?.id === payment.id &&
-      ["PENDING", "CREATING", "EXPIRED", "CANCELLED"].includes(previous.status)
+      (previous?.id !== payment.id || previous.status !== "PAID")
     ) {
-      toast.success(
-        `Баланс пополнен на ${Number(payment.amount).toLocaleString("ru-RU")} ₽`,
-      );
+      if (previous?.id === payment.id) {
+        toast.success(
+          `Баланс пополнен на ${formatBalance(payment.amount)} ₽`,
+        );
+      }
       onPaidRef.current?.();
     }
-  }, [open, payment]);
+  }, [payment]);
 
   useEffect(() => {
     if (!open || !redirectAfterCreation.current || !payment) return;
     if (payment.status === "PENDING" && payment.invoiceUrl) {
       redirectAfterCreation.current = false;
-      const tab = paymentWindow.current;
-      paymentWindow.current = null;
-      if (tab && !tab.closed) {
-        tab.opener = null;
-        tab.location.replace(payment.invoiceUrl);
-      } else {
-        toast.error("Браузер заблокировал вкладку. Нажмите «Перейти к оплате».");
-      }
-    } else if (payment.status !== "CREATING") {
+      window.location.assign(payment.invoiceUrl);
+    } else if (!["CREATING", "PENDING"].includes(payment.status)) {
       redirectAfterCreation.current = false;
-      paymentWindow.current?.close();
-      paymentWindow.current = null;
     }
   }, [open, payment, card]);
 
@@ -208,15 +188,7 @@ function TopUpPaymentForm({
     if (creating.current || pending || !overview) return;
     creating.current = true;
     redirectAfterCreation.current = true;
-    paymentWindow.current = window.open("about:blank", "_blank");
-    if (paymentWindow.current) {
-      paymentWindow.current.document.title = card
-        ? "Открываем ЮKassa"
-        : "Открываем CryptoBot";
-      paymentWindow.current.document.body.textContent = "Создаём счёт для оплаты…";
-    }
     setSubmitting(true);
-    setPollingPaused(false);
     setError(null);
     requestId.current ??= crypto.randomUUID();
     try {
@@ -230,8 +202,6 @@ function TopUpPaymentForm({
       requestId.current = null;
     } catch (failure) {
       redirectAfterCreation.current = false;
-      paymentWindow.current?.close();
-      paymentWindow.current = null;
       setError(failure instanceof Error ? failure.message : "Не удалось создать счёт");
     } finally {
       creating.current = false;
@@ -248,14 +218,12 @@ function TopUpPaymentForm({
       });
       setOverview(data);
       setError(null);
-      setPollingPaused(false);
       if (data.payment?.status === "PENDING" || data.payment?.status === "CREATING") {
         toast.error("Счёт пока не оплачен");
       } else if (data.payment?.status === "EXPIRED") {
         toast.error("Срок действия счёта истёк");
       }
     } catch (failure) {
-      setPollingPaused(true);
       setError(
         failure instanceof Error ? failure.message : "Не удалось проверить оплату",
       );
@@ -282,9 +250,7 @@ function TopUpPaymentForm({
           : previous,
       );
       requestId.current = null;
-      setPollingPaused(false);
     } catch (failure) {
-      setPollingPaused(true);
       setError(failure instanceof Error ? failure.message : "Не удалось отменить счёт");
     } finally {
       setCancelling(false);
@@ -311,47 +277,16 @@ function TopUpPaymentForm({
             Тестовый режим
           </p>
         )}
-        <div
-          role="group"
-          aria-label="Способ пополнения"
-          className="mb-5 grid grid-cols-2 gap-2"
-        >
-          <Button
-            type="button"
-            variant="ghost"
-            aria-pressed={card}
+        <div className="mb-5">
+          <PaymentMethodSelector
+            value={method}
+            options={[
+              { value: "bank_card", label: "Карта", icon: "card" },
+              { value: "cryptobot", label: "CryptoBot", icon: "cryptobot" },
+            ]}
             disabled={submitting || checking || cancelling}
-            onClick={() => onMethodChange("bank_card")}
-            className={`min-h-14 gap-2 rounded-xl px-3 motion-reduce:transition-none ${card ? "bg-[#ffe02e]/10 !text-[#ffe02e] hover:bg-[#ffe02e]/15" : "bg-[#242424] !text-[#c6c6c1] hover:bg-[#30302e]"}`}
-          >
-            <Image
-              src={IMAGES.IMAGES.CARD}
-              alt=""
-              width={36}
-              height={24}
-              className="h-6 w-9 shrink-0 object-contain"
-            />
-            <span className="min-w-0 whitespace-normal text-left leading-tight">
-              Карта
-            </span>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            aria-pressed={!card}
-            disabled={submitting || checking || cancelling}
-            onClick={() => onMethodChange("cryptobot")}
-            className={`min-h-14 gap-2 rounded-xl !border-0 px-3 motion-reduce:transition-none ${!card ? "bg-[#ffe02e]/10 !text-[#ffe02e] hover:bg-[#ffe02e]/15" : "bg-[#242424] !text-[#c6c6c1] hover:bg-[#30302e]"}`}
-          >
-            <Image
-              src={IMAGES.IMAGES.CRYPTOBOT}
-              alt="Логотип CryptoBot"
-              width={28}
-              height={28}
-              className="size-7 shrink-0 object-contain"
-            />
-            CryptoBot
-          </Button>
+            onChange={onMethodChange}
+          />
         </div>
         <p className="mb-2 text-xs font-medium text-[#c6c6c1]">Сумма, ₽</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -409,9 +344,7 @@ function TopUpPaymentForm({
             className="mt-4 rounded-xl bg-[#101010] p-3 text-sm leading-relaxed text-[#c6c6c1]"
           >
             {payment.status === "CREATING" &&
-              (pollingPaused
-                ? "Ссылка на оплату ещё не получена. Автоматическая проверка остановлена. Нажмите «Проверить оплату», чтобы повторить запрос."
-                : "Уточняем статус создания счёта. Повторно создавать его не нужно. Можно закрыть окно и вернуться позже.")}
+              "Уточняем статус создания счёта. Повторно создавать его не нужно. Можно закрыть окно и вернуться позже."}
             {payment.status === "PENDING" &&
               (card
                 ? "Платёж создан. Оплатите его картой на странице ЮKassa — статус обновится автоматически."
@@ -495,9 +428,7 @@ function TopUpPaymentForm({
               {loading
                 ? "Загрузка…"
                 : pending
-                  ? pollingPaused
-                    ? "Оплата пока недоступна"
-                    : "Уточняем статус…"
+                  ? "Уточняем статус…"
                   : submitting
                     ? "Создаём счёт…"
                     : "Пополнить"}

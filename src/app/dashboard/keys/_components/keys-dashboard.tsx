@@ -1,19 +1,20 @@
 "use client";
 
 import type { ApiKeyFundingSettings } from "@/configs/types/subscriptions.types";
+import { formatBalance } from "@/lib/format-balance";
 import { PATHS } from "@/configs/paths/pages.paths";
 
 import {
   IconCheck,
   IconCopy,
   IconKey,
-  IconPencil,
+  IconSettings,
   IconPlus,
   IconTrash,
-  IconX,
 } from "@tabler/icons-react";
 import toast from "react-hot-toast";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
+import { ApiKeySettingsModal } from "@/components/modals/api-key-settings-modal";
 import { CreateApiKeyModal } from "@/components/modals/create-api-key-modal";
 import { TopUpModal } from "@/components/modals/top-up-modal";
 import { ModalShell } from "@/components/modals/modal-shell";
@@ -31,11 +32,11 @@ export function KeysDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingKey, setEditingKey] = useState<string | null>(null);
-  const [nameDraft, setNameDraft] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showTopUpForm, setShowTopUpForm] = useState(false);
   const [pendingKey, setPendingKey] = useState<string | null>(null);
   const [keyToDelete, setKeyToDelete] = useState<ApiKeySummary | null>(null);
+  const selectedKey = keys.find((key) => key.id === editingKey);
   const totalSpent = keys.reduce((total, key) => total + Number(key.spent), 0);
   const totalRequests = keys.reduce((total, key) => total + key.requests, 0);
 
@@ -97,37 +98,6 @@ export function KeysDashboard() {
     );
   }
 
-  async function updateFunding(
-    key: ApiKeySummary,
-    settings: ApiKeyFundingSettings,
-  ) {
-    if (pendingKey) return;
-    setPendingKey(key.id);
-    setKeys((current) =>
-      current.map((item) =>
-        item.id === key.id ? { ...item, ...settings } : item,
-      ),
-    );
-    try {
-      await dashboardFetch(PATHS.API.DASHBOARD.KEY(key.id), {
-        method: "PATCH",
-        body: JSON.stringify(settings),
-      });
-      toast.success("Настройки ключа сохранены");
-    } catch (failure) {
-      setKeys((current) =>
-        current.map((item) => (item.id === key.id ? key : item)),
-      );
-      toast.error(
-        failure instanceof Error
-          ? failure.message
-          : "Не удалось сохранить настройки",
-      );
-    } finally {
-      setPendingKey(null);
-    }
-  }
-
   async function copySecret() {
     if (!secret) return;
     try {
@@ -150,43 +120,6 @@ export function KeysDashboard() {
     }
   }
 
-  function beginRename(key: ApiKeySummary) {
-    setEditingKey(key.id);
-    setNameDraft(key.name);
-  }
-
-  function saveRename(event: FormEvent<HTMLFormElement>, keyId: string) {
-    event.preventDefault();
-    const name = nameDraft.trim();
-    if (!name || pendingKey) return;
-    const currentName = keys.find((key) => key.id === keyId)?.name;
-    if (name === currentName) {
-      setEditingKey(null);
-      return;
-    }
-    setPendingKey(keyId);
-    void toast
-      .promise(
-        (async () => {
-          await dashboardFetch(PATHS.API.DASHBOARD.KEY(keyId), {
-            method: "PATCH",
-            body: JSON.stringify({ name }),
-          });
-          setKeys((current) =>
-            current.map((key) => (key.id === keyId ? { ...key, name } : key)),
-          );
-          setEditingKey(null);
-        })(),
-        {
-          loading: "Сохраняем…",
-          success: "Название обновлено",
-          error: (failure) => failure.message,
-        },
-      )
-      .catch(() => {})
-      .finally(() => setPendingKey(null));
-  }
-
   function deleteKey(key: ApiKeySummary) {
     if (pendingKey) return;
     setPendingKey(key.id);
@@ -198,6 +131,7 @@ export function KeysDashboard() {
           });
           setKeys((current) => current.filter((item) => item.id !== key.id));
           setKeyToDelete(null);
+          setEditingKey(null);
         })(),
         {
           loading: "Отзываем ключ…",
@@ -225,8 +159,7 @@ export function KeysDashboard() {
                 API-ключи
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-[#a5a5a1]">
-                Управляйте ключами и смотрите расходы по каждому. Секрет ключа
-                показывается только один раз при создании.
+                Ключи доступа и расходы по ним.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -306,7 +239,7 @@ export function KeysDashboard() {
                   key={row}
                   className="border-t border-white/[0.06] px-5 py-4 sm:px-6"
                 >
-                  <div className="grid gap-4 lg:grid-cols-[minmax(220px,1.5fr)_minmax(320px,1.3fr)_auto] lg:items-center">
+                  <div className="grid gap-4 xl:grid-cols-[minmax(220px,1.5fr)_minmax(420px,2fr)_auto] xl:items-center">
                     <Skeleton className="h-5 w-40" />
                     <Skeleton className="h-4 w-56" />
                     <Skeleton className="h-9 w-24" />
@@ -325,113 +258,31 @@ export function KeysDashboard() {
                   key={key.id}
                   className="border-t border-white/[0.06] px-5 py-4 sm:px-6"
                 >
-                  <div className="grid gap-4 lg:grid-cols-[minmax(220px,1.5fr)_minmax(320px,1.3fr)_auto] lg:items-center">
+                  <div className="grid gap-4 xl:grid-cols-[minmax(220px,1.5fr)_minmax(420px,2fr)_auto] xl:items-center">
                     <div className="flex min-w-0 items-start gap-3">
                       <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#242424] text-[#bdbdb8]">
                         <IconKey aria-hidden="true" size={17} stroke={1.6} />
                       </span>
                       <div className="min-w-0 flex-1">
-                        {editingKey === key.id ? (
-                          <form
-                            onSubmit={(event) => saveRename(event, key.id)}
-                            className="flex gap-2"
-                          >
-                            <label
-                              className="sr-only"
-                              htmlFor={`rename-${key.id}`}
-                            >
-                              Новое имя ключа
-                            </label>
-                            <input
-                              id={`rename-${key.id}`}
-                              autoFocus
-                              required
-                              maxLength={48}
-                              value={nameDraft}
-                              onChange={(event) =>
-                                setNameDraft(event.target.value)
-                              }
-                              className="h-9 min-w-0 flex-1 rounded-lg border border-[#3b3b39] bg-[#101010] px-3 text-sm text-[#f3f2ee] outline-none focus:border-[#ffe02e]/70 focus:ring-2 focus:ring-[#ffe02e]/20"
-                            />
-                            <button
-                              type="submit"
-                              className="inline-flex size-9 items-center justify-center rounded-lg bg-[#ffe02e] text-[#171717] transition-colors hover:bg-[#ffcc36] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
-                              aria-label="Сохранить название"
-                            >
-                              <IconCheck aria-hidden="true" size={17} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingKey(null)}
-                              className="inline-flex size-9 items-center justify-center rounded-lg text-[#999994] hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
-                              aria-label="Отменить переименование"
-                            >
-                              <IconX aria-hidden="true" size={17} />
-                            </button>
-                          </form>
-                        ) : (
-                          <>
-                            <h3 className="truncate text-sm font-medium text-[#f3f2ee]">
-                              {key.name}
-                            </h3>
-                            <p className="mt-1 truncate font-mono text-[11px] text-[#777875]">
-                              {key.prefix}••••••••
-                            </p>
-                          </>
-                        )}
-                        <div className="mt-3 space-y-1">
-                          <label className="flex min-h-11 items-center gap-2 text-xs text-[#d0d0cb]">
-                            <input
-                              type="checkbox"
-                              checked={key.useSubscription}
-                              disabled={pendingKey !== null}
-                              onChange={(event) =>
-                                void updateFunding(key, {
-                                  useSubscription: event.target.checked,
-                                  allowBalanceFallback: event.target.checked
-                                    ? key.allowBalanceFallback
-                                    : false,
-                                })
-                              }
-                              className="accent-[#ffe02e]"
-                            />
-                            Использовать подписку
-                          </label>
-                          <label className="flex min-h-11 items-center gap-2 text-xs text-[#a5a5a1]">
-                            <input
-                              type="checkbox"
-                              checked={key.allowBalanceFallback}
-                              disabled={
-                                pendingKey !== null || !key.useSubscription
-                              }
-                              onChange={(event) =>
-                                void updateFunding(key, {
-                                  useSubscription: key.useSubscription,
-                                  allowBalanceFallback: event.target.checked,
-                                })
-                              }
-                              className="accent-[#ffe02e]"
-                            />
-                            Если пакет недоступен — API-баланс
-                          </label>
-                        </div>
-                        <p className="mt-1 text-[11px] text-[#777875]">
-                          Создан{" "}
-                          {new Date(key.createdAt).toLocaleDateString("ru-RU")}
+                        <h3 className="truncate text-sm font-medium text-[#f3f2ee]">
+                          {key.name}
+                        </h3>
+                        <p className="mt-1 truncate font-mono text-xs text-[#777875]">
+                          {key.prefix}••••••••
                         </p>
                       </div>
                     </div>
 
                     <div>
-                      <p className="mb-2 text-xs text-[#a5a5a1]">
-                        Подписка:{" "}
-                        {Number(key.subscriptionCreditsUsed).toLocaleString(
-                          "ru-RU",
-                          { maximumFractionDigits: 8 },
-                        )}{" "}
-                        кредитов
-                      </p>
-                      <dl className="grid grid-cols-2 gap-3 rounded-xl bg-[#242424]/70 px-3 py-2.5 sm:grid-cols-3 lg:bg-transparent lg:px-0 lg:py-0">
+                      <dl className="grid grid-cols-2 gap-4 rounded-xl bg-[#242424]/70 px-3 py-2.5 sm:grid-cols-4 xl:bg-transparent xl:px-0 xl:py-0">
+                        <div>
+                          <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
+                            Кредиты подписки
+                          </dt>
+                          <dd className="mt-1 text-sm font-medium tabular-nums text-[#f3f2ee]">
+                            {formatBalance(key.subscriptionCreditsUsed)}
+                          </dd>
+                        </div>
                         <div>
                           <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
                             API-баланс
@@ -448,7 +299,7 @@ export function KeysDashboard() {
                             {key.requests.toLocaleString("ru-RU")}
                           </dd>
                         </div>
-                        <div className="col-span-2 sm:col-span-1">
+                        <div className="min-w-0">
                           <dt className="text-[10px] uppercase tracking-wide text-[#777875]">
                             Последнее использование
                           </dt>
@@ -461,7 +312,7 @@ export function KeysDashboard() {
                       </dl>
                     </div>
 
-                    <div className="flex items-center gap-1 lg:justify-end">
+                    <div className="flex items-center gap-1 xl:justify-end">
                       {issuedSecrets[key.id] ? (
                         <button
                           type="button"
@@ -476,22 +327,12 @@ export function KeysDashboard() {
                       <button
                         type="button"
                         disabled={pendingKey !== null}
-                        onClick={() => beginRename(key)}
-                        aria-label={`Переименовать ключ ${key.name}`}
-                        title="Переименовать"
+                        onClick={() => setEditingKey(key.id)}
+                        aria-label={`Настройки ключа ${key.name}`}
+                        title="Настройки ключа"
                         className="inline-flex size-10 items-center justify-center rounded-lg text-[#999994] transition-colors hover:bg-white/[0.07] hover:text-[#f3f2ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
                       >
-                        <IconPencil aria-hidden="true" size={17} />
-                      </button>
-                      <button
-                        type="button"
-                        disabled={pendingKey !== null}
-                        onClick={() => setKeyToDelete(key)}
-                        aria-label={`Удалить ключ ${key.name}`}
-                        title="Удалить"
-                        className="inline-flex size-10 items-center justify-center rounded-lg text-[#999994] transition-colors hover:bg-[#e05a5a]/10 hover:text-[#ff8585] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
-                      >
-                        <IconTrash aria-hidden="true" size={17} />
+                        <IconSettings aria-hidden="true" size={18} />
                       </button>
                     </div>
                   </div>
@@ -509,6 +350,23 @@ export function KeysDashboard() {
         </section>
       </div>
 
+      {selectedKey && (
+        <ApiKeySettingsModal
+          key={selectedKey.id}
+          apiKey={selectedKey}
+          onClose={() => setEditingKey(null)}
+          onSaved={(updated) => {
+            setKeys((current) =>
+              current.map((key) => key.id === updated.id ? updated : key),
+            );
+            setEditingKey(null);
+          }}
+          onDelete={(key) => {
+            setEditingKey(null);
+            setKeyToDelete(key);
+          }}
+        />
+      )}
       <ModalShell
         open={secret !== null}
         titleId="new-secret-title"
@@ -609,8 +467,5 @@ function Metric({
 }
 
 function formatRubles(value: number) {
-  return `₽ ${value.toLocaleString("ru-RU", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })}`;
+  return `₽ ${formatBalance(value)}`;
 }

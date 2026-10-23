@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { IconSparkles } from "@tabler/icons-react";
 import toast from "react-hot-toast";
+import { Button } from "@/components/ui/button";
+import { PaymentMethodSelector } from "@/components/modals/payment-method-selector";
 import { ModalShell } from "@/components/modals/modal-shell";
 import { PATHS } from "@/configs/paths/pages.paths";
 import type {
@@ -25,9 +27,25 @@ export function SubscriptionDashboard() {
   const [pending, setPending] = useState(false);
   const [order, setOrder] = useState<SubscriptionOrderSummary | null>(null);
   const requestId = useRef<string | null>(null);
+  const redirectAfterCheckout = useRef(false);
 
   const displayedOrder =
     data?.orders.find((item) => item.id === order?.id) ?? order;
+
+  useEffect(() => {
+    if (!selected) {
+      redirectAfterCheckout.current = false;
+      return;
+    }
+    if (!redirectAfterCheckout.current || !displayedOrder) return;
+    if (displayedOrder.status === "PENDING" && displayedOrder.invoiceUrl) {
+      redirectAfterCheckout.current = false;
+      window.location.assign(displayedOrder.invoiceUrl);
+    } else if (!["CREATING", "PENDING"].includes(displayedOrder.status)) {
+      redirectAfterCheckout.current = false;
+    }
+  }, [selected, displayedOrder]);
+
   const selectedMode = data?.paymentModes[method];
   const purchasedPeriods =
     selectedMode === "test"
@@ -38,14 +56,32 @@ export function SubscriptionDashboard() {
     lastPeriod?.endsAt ??
     (selectedMode === "live" ? data?.current?.endsAt : undefined);
 
-  function selectPlan(plan: SubscriptionPlan) {
+  function selectPlan(
+    plan: SubscriptionPlan,
+    existingOrder?: SubscriptionOrderSummary,
+  ) {
+    redirectAfterCheckout.current = false;
+    const pendingOrder = existingOrder ?? data?.orders.find(
+      (item) =>
+        item.planId === plan.id &&
+        ["CREATING", "PENDING"].includes(item.status),
+    ) ?? (
+      order?.planId === plan.id &&
+      ["CREATING", "PENDING"].includes(order.status)
+        ? order
+        : null
+    );
     setSelected(plan);
-    setOrder(null);
+    setOrder(pendingOrder);
+    if (pendingOrder) {
+      setMethod(pendingOrder.method === "card" ? "card" : "cryptobot");
+    }
     requestId.current = null;
   }
 
   async function checkout() {
     if (!selected || pending) return;
+    redirectAfterCheckout.current = method !== "balance";
     setPending(true);
     requestId.current ??= crypto.randomUUID();
     try {
@@ -77,6 +113,7 @@ export function SubscriptionDashboard() {
       }
       await refresh();
     } catch (failure) {
+      redirectAfterCheckout.current = false;
       toast.error(
         failure instanceof Error
           ? failure.message
@@ -111,44 +148,43 @@ export function SubscriptionDashboard() {
       aria-labelledby="dashboard-page-title"
     >
       <div className="mx-auto max-w-[1340px] space-y-6">
-        <div>
-          <h1
-            id="dashboard-page-title"
-            className="text-2xl font-semibold tracking-tight sm:text-3xl"
-          >
-            Подписка
-          </h1>
-          <p className="mt-2 text-sm text-[#a5a5a1]">
-            Пакеты для регулярной работы с моделями через API.
-          </p>
-        </div>
-        {error && (
-          <p
-            role="alert"
-            className="rounded-xl bg-[#1b1b1b] p-4 text-sm text-[#ffb3a9]"
-          >
-            {error}{" "}
-            <button
-              type="button"
-              onClick={() => void refresh()}
-              className="ml-2 min-h-11 underline focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
+        <section className="space-y-6 rounded-[20px] bg-[#1b1b1b] p-5 sm:p-6">
+          <div>
+            <h1
+              id="dashboard-page-title"
+              className="text-2xl font-semibold tracking-tight sm:text-3xl"
             >
-              Повторить
-            </button>
-          </p>
-        )}
-        {data ? (
-          <SubscriptionStatus data={data} />
-        ) : (
-          !error && (
+              Подписка
+            </h1>
+          </div>
+          {error && (
             <p
-              role="status"
-              className="rounded-[20px] bg-[#1b1b1b] p-6 text-[#a5a5a1]"
+              role="alert"
+              className="rounded-xl bg-[#1b1b1b] p-4 text-sm text-[#ffb3a9]"
             >
-              Загружаем подписку…
+              {error}{" "}
+              <button
+                type="button"
+                onClick={() => void refresh()}
+                className="ml-2 min-h-11 underline focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
+              >
+                Повторить
+              </button>
             </p>
-          )
-        )}
+          )}
+          {data ? (
+            <SubscriptionStatus data={data} />
+          ) : (
+            !error && (
+              <p
+                role="status"
+                className="rounded-[20px] bg-[#1b1b1b] p-6 text-[#a5a5a1]"
+              >
+                Загружаем подписку…
+              </p>
+            )
+          )}
+        </section>
         <section aria-labelledby="subscription-plans-title">
           <h2
             id="subscription-plans-title"
@@ -160,26 +196,26 @@ export function SubscriptionDashboard() {
             {data?.plans.map((plan) => (
               <article
                 key={plan.id}
-                className="flex flex-col rounded-[15px] bg-[#1b1b1b] p-6"
+                className="flex flex-col rounded-[18px] bg-[#1b1b1b] p-6"
               >
                 <div className="flex items-center justify-between gap-2">
                   <h3 className="text-xl font-semibold">{plan.name}</h3>
                   {plan.id === "vega" && (
                     <span className="rounded-full bg-[#ffe02e]/10 px-2.5 py-1 text-xs text-[#ffe02e]">
-                      Для ежедневной работы
+                      Лучший выбор
                     </span>
                   )}
                 </div>
                 <p className="mt-5 text-3xl font-semibold tabular-nums">
-                  {credits(plan.amount)} ₽{" "}
+                  {plan.amount.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} ₽{" "}
                   <span className="text-sm font-normal text-[#a5a5a1]">
                     / 30 дней
                   </span>
                 </p>
-                <ul className="my-6 space-y-3 text-sm leading-6 text-[#d0d0cb]">
+                <ul className="my-6 list-disc space-y-3 pl-4 text-sm leading-6 text-[#d0d0cb] marker:text-[#ffe02e]/70">
                   <li>
                     <strong className="text-[#f3f2ee]">
-                      {credits(plan.credits)} кредитов
+                      {plan.credits.toLocaleString("ru-RU", { maximumFractionDigits: 0 })} кредитов
                     </strong>{" "}
                     на период
                   </li>
@@ -187,7 +223,7 @@ export function SubscriptionDashboard() {
                   <li>{plan.requestsPerMinute} запросов в минуту</li>
                   <li>
                     {plan.id === "nova"
-                      ? "Без GPT 6 Astra и Claude Fable 5/5.1"
+                      ? "Без GPT Astra и Claude Fable"
                       : "Все модели каталога"}
                   </li>
                 </ul>
@@ -214,22 +250,16 @@ export function SubscriptionDashboard() {
             Как расходуется пакет
           </h2>
           <p className="mt-3 text-sm leading-6 text-[#a5a5a1]">
-            1 кредит = 1 ₽ использования по стандартным тарифам API. Расход
-            зависит от модели, входящих и исходящих токенов. Кредиты действуют
-            30 дней, остаток не переносится. Автопродления нет. Купленный
-            заранее период начнётся после уже оплаченных периодов.
-          </p>
-          <p className="mt-3 text-sm leading-6 text-[#a5a5a1]">
-            Включите использование подписки в настройках нужных{" "}
+            1 кредит = 1 ₽ по тарифам API. Пакет действует 30 дней без автопродления,
+            остаток не переносится. Следующий период начнётся после оплаченного.
+            Включите подписку в настройках{" "}
             <Link
               href={PATHS.DASHBOARD.KEYS}
               className="text-[#ffe02e] underline focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
             >
-              API-ключей
+              API-ключа
             </Link>
-            . Переход на денежный баланс требует отдельного разрешения. Для
-            длинных запросов нужен достаточный резерв; уменьшение max_tokens
-            уменьшает резерв.
+            .
           </p>
         </section>
         {data && data.testPeriods.length > 0 && (
@@ -290,10 +320,7 @@ export function SubscriptionDashboard() {
                             (p) => p.id === item.planId,
                           );
                           if (plan) {
-                            selectPlan(plan);
-                            setMethod(
-                              item.method === "card" ? "card" : "cryptobot",
-                            );
+                            selectPlan(plan, item);
                           }
                         }}
                         className={buttonClass}
@@ -330,55 +357,46 @@ export function SubscriptionDashboard() {
         open={selected !== null}
         titleId="subscription-checkout-title"
         title={selected ? `Подписка ${selected.name}` : "Подписка"}
-        description="Оплата одного периода на 30 дней. Автоматических списаний не будет."
+        description="Один период на 30 дней, без автопродления."
         icon={<IconSparkles aria-hidden="true" size={19} />}
         onClose={() => {
           if (!pending) setSelected(null);
         }}
       >
-        <p className="mt-5 text-sm">
-          К оплате: <strong>{selected?.amount} ₽</strong>. Начало:{" "}
-          {startsAt ? date(startsAt) : "сразу после подтверждения оплаты"}.
-        </p>
-        <fieldset
-          disabled={pending || order !== null}
-          className="mt-5 space-y-2"
-        >
-          <legend className="mb-2 text-sm font-medium">Способ оплаты</legend>
-          {(["balance", "card", "cryptobot"] as const).map((value) => (
-            <label
-              key={value}
-              className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl bg-[#242424] px-3 py-2 text-sm"
-            >
-              <input
-                type="radio"
-                disabled={!data?.paymentModes[value]}
-                name="subscription-method"
-                value={value}
-                checked={method === value}
-                onChange={() => {
-                  setMethod(value);
-                  requestId.current = null;
-                }}
-                className="accent-[#ffe02e] focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
-              />
-              {methodLabel(value)}
-              {value === "balance"
-                ? ` · ${credits(data?.balance ?? 0)} ₽`
-                : !data?.paymentModes[value]
-                  ? " · недоступно"
-                  : data.paymentModes[value] === "test"
-                    ? " · тестовый режим"
-                    : ""}
-            </label>
-          ))}
-        </fieldset>
         {selectedMode === "test" && (
-          <p className="mt-3 text-xs leading-5 text-[#ffe02e]">
-            Выбран тестовый способ оплаты. Тестовая оплата не выдаёт реальных
-            кредитов.
-          </p>
+          <div
+            role="status"
+            className="mt-4 rounded-lg bg-[#ffe02e]/10 p-3 text-sm leading-relaxed text-[#ffe02e]"
+          >
+            Тестовый режим
+          </div>
         )}
+        <div className="mt-5">
+          <PaymentMethodSelector<SubscriptionMethod>
+            value={method}
+            options={[
+              { value: "card", label: "Карта", icon: "card", disabled: !data?.paymentModes.card },
+              { value: "cryptobot", label: "CryptoBot", icon: "cryptobot", disabled: !data?.paymentModes.cryptobot },
+              { value: "balance", label: `Баланс · ${credits(data?.balance ?? 0)} ₽`, icon: "balance", disabled: !data?.paymentModes.balance },
+            ]}
+            disabled={pending || order !== null}
+            onChange={(value) => {
+              setMethod(value);
+              requestId.current = null;
+            }}
+          />
+          <div className="mt-5 rounded-xl bg-[#101010] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm text-[#a5a5a1]">К оплате</span>
+              <strong className="text-xl tabular-nums">{credits(selected?.amount ?? 0)} ₽</strong>
+            </div>
+            {startsAt && (
+              <p className="mt-2 text-xs text-[#a5a5a1]">
+                Начало: {date(startsAt)}
+              </p>
+            )}
+          </div>
+        </div>
         {displayedOrder && (
           <p role="status" className="mt-4 text-sm text-[#a5a5a1]">
             {statusLabel(displayedOrder.status)}.{" "}
@@ -386,37 +404,35 @@ export function SubscriptionDashboard() {
               "После оплаты статус обновится автоматически."}
           </p>
         )}
-        {displayedOrder?.status === "PAID" ? (
-          <button
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
             type="button"
-            className={`${buttonClass} mt-5 w-full`}
+            variant="ghost"
+            size="sm"
+            disabled={pending}
             onClick={() => setSelected(null)}
+            className="!bg-transparent px-4 text-sm font-medium text-[#bdbdb8] hover:!bg-white/[0.06] hover:!text-[#f3f2ee]"
           >
-            Готово
-          </button>
-        ) : displayedOrder?.invoiceUrl ? (
-          <a
-            className={`${buttonClass} mt-5 w-full`}
-            href={displayedOrder.invoiceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Перейти к оплате
-          </a>
-        ) : (
-          <button
-            type="button"
-            disabled={
-              pending ||
-              !selectedMode ||
-              (!!displayedOrder && displayedOrder.status !== "CREATING")
-            }
-            onClick={() => void checkout()}
-            className={`${buttonClass} mt-5 w-full`}
-          >
-            {pending ? "Оформляем…" : "Оплатить подписку"}
-          </button>
-        )}
+            Отмена
+          </Button>
+          {displayedOrder?.status === "PAID" ? (
+            <Button type="button" size="sm" onClick={() => setSelected(null)}>Готово</Button>
+          ) : displayedOrder?.invoiceUrl ? (
+            <Button asChild size="sm" className="px-4 text-sm">
+              <a href={displayedOrder.invoiceUrl} target="_blank" rel="noopener noreferrer">Перейти к оплате</a>
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              size="sm"
+              disabled={pending || !selectedMode || (!!displayedOrder && displayedOrder.status !== "CREATING")}
+              onClick={() => void checkout()}
+              className="px-4 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {pending ? "Оформляем…" : "Оплатить подписку"}
+            </Button>
+          )}
+        </div>
       </ModalShell>
     </main>
   );

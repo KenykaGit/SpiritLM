@@ -47,7 +47,11 @@ export function Sidebar() {
                 alt=""
                 width={16}
                 height={16}
-                className="size-4 shrink-0 brightness-0 invert"
+                className={`size-4 shrink-0 ${
+                  item.id === "KEYS" || item.id === "SUBSCRIPTION"
+                    ? "brightness-150 saturate-50"
+                    : "brightness-0 invert"
+                }`}
               />
               <span className="max-w-full truncate md:hidden">
                 {labels[item.id]}

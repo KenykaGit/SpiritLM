@@ -2,6 +2,7 @@
 
 import { IconKey, IconPlus } from "@tabler/icons-react";
 import { useState, type FormEvent } from "react";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { ModalShell } from "./modal-shell";
 
@@ -66,36 +67,28 @@ export function CreateApiKeyModal({
           placeholder="Например, Backend production"
           className="h-11 w-full rounded-xl border border-[#3b3b39] bg-[#101010] px-3 text-sm text-[#f3f2ee] outline-none placeholder:text-[#777875] focus:border-[#ffe02e]/70 focus:ring-2 focus:ring-[#ffe02e]/20"
         />
-        <div className="mt-4 space-y-2">
-          <label className="flex min-h-11 items-center gap-3 text-sm">
-            <input
-              type="checkbox"
+        <div className="mt-5 space-y-3">
+          <label htmlFor="new-key-subscription" className="flex min-h-11 items-center justify-between gap-4 text-sm">
+            Использовать подписку
+            <Switch
+              id="new-key-subscription"
               checked={useSubscription}
               disabled={pending}
-              onChange={(event) => {
-                setUseSubscription(event.target.checked);
-                if (!event.target.checked) setAllowBalanceFallback(false);
+              onCheckedChange={(checked) => {
+                setUseSubscription(checked);
+                if (!checked) setAllowBalanceFallback(false);
               }}
-              className="accent-[#ffe02e]"
             />
-            Использовать кредиты подписки
           </label>
-          <label className="flex min-h-11 items-start gap-3 text-sm text-[#a5a5a1]">
-            <input
-              type="checkbox"
+          <label htmlFor="new-key-fallback" className="flex min-h-11 items-center justify-between gap-4 text-sm text-[#a5a5a1]">
+            Использовать баланс, если пакета не хватит
+            <Switch
+              id="new-key-fallback"
               checked={allowBalanceFallback}
               disabled={pending || !useSubscription}
-              onChange={(event) =>
-                setAllowBalanceFallback(event.target.checked)
-              }
-              className="mt-1 accent-[#ffe02e]"
+              onCheckedChange={setAllowBalanceFallback}
             />
-            Использовать API-баланс, если подписка не покрывает запрос
           </label>
-          <p className="text-xs leading-5 text-[#a5a5a1]">
-            Без подписки ключ оплачивает запросы с API-баланса. При включённой
-            подписке переход на баланс требует отдельного разрешения.
-          </p>
         </div>
         {error && (
           <p

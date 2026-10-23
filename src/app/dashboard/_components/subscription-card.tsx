@@ -1,5 +1,6 @@
 "use client";
 
+import { formatBalance } from "@/lib/format-balance";
 import Link from "next/link";
 import { PATHS } from "@/configs/paths/pages.paths";
 import { useSubscription } from "./use-subscription";
@@ -21,7 +22,7 @@ export function SubscriptionCard() {
             : !data
               ? "Загружаем…"
               : data.current
-                ? `Доступно ${Number(data.current.remainingCredits).toLocaleString("ru-RU", { maximumFractionDigits: 8 })} кредитов`
+                ? `Доступно ${formatBalance(data.current.remainingCredits)} кредитов`
                 : "Пакеты кредитов для регулярной работы"}
         </p>
       </div>

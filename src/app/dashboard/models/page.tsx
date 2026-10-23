@@ -1,7 +1,5 @@
 "use client";
 
-import { NOVA_EXCLUDED_MODELS } from "@/configs/consts/subscriptions.const";
-
 import Image from "next/image";
 import { IconCheck, IconCopy, IconSearch } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
@@ -185,11 +183,6 @@ export default function DashboardModelsPage() {
                             )}
                           </button>
                         </div>
-                        {NOVA_EXCLUDED_MODELS.includes(model.id) && (
-                          <p className="mt-2 text-xs text-[#ffe02e]">
-                            В подписке — с Vega. Также доступна с API-баланса.
-                          </p>
-                        )}
                         <p className="mt-1 break-all font-mono text-xs text-[#858580]">
                           {model.id}
                         </p>

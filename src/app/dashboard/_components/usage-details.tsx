@@ -1,3 +1,4 @@
+import { formatBalance } from "@/lib/format-balance";
 import type { DashboardSummary } from "@/configs/types/api.types";
 import { Skeleton } from "./skeleton";
 
@@ -45,9 +46,7 @@ export function UsageDetails({
       {summary && (
         <p className="mt-3 text-sm text-[#d0d0cb]">
           Расход подписки за период:{" "}
-          {Number(summary.subscriptionCreditsUsed).toLocaleString("ru-RU", {
-            maximumFractionDigits: 8,
-          })}{" "}
+          {formatBalance(summary.subscriptionCreditsUsed)}{" "}
           кредитов
         </p>
       )}
@@ -146,9 +145,7 @@ export function CreditHistory({
               </div>
               <span className="shrink-0 text-sm tabular-nums text-[#ffe02e]">
                 {Number(item.amount) >= 0 ? "+" : "−"}₽{" "}
-                {Math.abs(Number(item.amount)).toLocaleString("ru-RU", {
-                  maximumFractionDigits: 8,
-                })}
+                {formatBalance(Math.abs(Number(item.amount)))}
               </span>
             </li>
           ))}

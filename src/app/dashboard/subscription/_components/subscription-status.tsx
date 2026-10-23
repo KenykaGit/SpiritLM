@@ -1,3 +1,4 @@
+import { formatBalance } from "@/lib/format-balance";
 import type { SubscriptionOverview } from "@/configs/types/subscriptions.types";
 
 export function SubscriptionStatus({ data }: { data: SubscriptionOverview }) {
@@ -12,7 +13,6 @@ export function SubscriptionStatus({ data }: { data: SubscriptionOverview }) {
     : 0;
   return (
     <section
-      className="rounded-[20px] bg-[#1b1b1b] p-5 sm:p-6"
       aria-labelledby="subscription-status-title"
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -26,8 +26,8 @@ export function SubscriptionStatus({ data }: { data: SubscriptionOverview }) {
           </h2>
           <p className="mt-2 text-sm text-[#a5a5a1]">
             {current
-              ? `Действует до ${date(current.endsAt)} · ручное продление`
-              : "Выберите пакет на 30 дней. API-баланс остаётся отдельным."}
+              ? `Действует до ${date(current.endsAt)}`
+              : ""}
           </p>
         </div>
         <span className="rounded-full bg-[#242424] px-3 py-2 text-xs text-[#d0d0cb]">
@@ -70,9 +70,7 @@ export function SubscriptionStatus({ data }: { data: SubscriptionOverview }) {
             />
           </div>
           <p className="mt-2 text-xs leading-5 text-[#a5a5a1]">
-            Жёлтый — списано. Серый — резерв выполняющихся запросов:{" "}
-            {credits(reserved)} кредитов. Неиспользованный резерв возвращается
-            после ответа.
+            В резерве: {credits(reserved)} кредитов.
           </p>
           <dl className="mt-6 grid gap-4 sm:grid-cols-2">
             <div>
@@ -109,7 +107,7 @@ export function SubscriptionStatus({ data }: { data: SubscriptionOverview }) {
 }
 
 export function credits(value: number | string) {
-  return Number(value).toLocaleString("ru-RU", { maximumFractionDigits: 8 });
+  return formatBalance(value);
 }
 export function date(value: string) {
   return new Date(value).toLocaleString("ru-RU", {

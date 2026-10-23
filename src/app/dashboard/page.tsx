@@ -1,5 +1,6 @@
 "use client";
 
+import { formatBalance } from "@/lib/format-balance";
 import { PATHS } from "@/configs/paths/pages.paths";
 
 import {
@@ -23,7 +24,8 @@ import type {
 } from "@/configs/types/api.types";
 import { dashboardFetch } from "@/lib/dashboard-client";
 import { CreditHistory, UsageDetails } from "./_components/usage-details";
-import { SubscriptionCard } from "./_components/subscription-card";
+import Link from "next/link";
+import { useSubscription } from "./_components/use-subscription";
 import { Skeleton } from "./_components/skeleton";
 
 const chartConfig = {
@@ -33,6 +35,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 export default function Dashboard() {
+  const { data: subscription, error: subscriptionError } = useSubscription();
   const { user, isLoaded: isUserLoaded } = useUser();
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -116,9 +119,25 @@ export default function Dashboard() {
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div>
               {isUserLoaded ? (
-                <p className="text-sm text-[#999994]">
-                  @{username ?? "Пользователь"}
-                </p>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <p className="text-sm text-[#999994]">
+                    @{username ?? "Пользователь"}
+                  </p>
+                  {subscription ? (
+                    <Link
+                      href={PATHS.DASHBOARD.SUBSCRIPTION}
+                      className={`rounded-full px-2.5 py-1 text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] ${
+                        subscription.current
+                          ? "bg-[#ffe02e]/10 text-[#ffe02e]"
+                          : "bg-white/[0.06] text-[#a5a5a1]"
+                      }`}
+                    >
+                      {subscription.current?.planName ?? "Бесплатно"}
+                    </Link>
+                  ) : subscriptionError ? null : (
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  )}
+                </div>
               ) : (
                 <Skeleton className="h-4 w-28" />
               )}
@@ -141,12 +160,12 @@ export default function Dashboard() {
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Metric
               label="Баланс"
-              value={summary ? rubles(summary.balance, 2) : undefined}
+              value={summary ? rubles(summary.balance) : undefined}
               loading={!summary && !error}
             />
             <Metric
               label="Расход API-баланса за всё время"
-              value={summary ? rubles(summary.spent, 2) : undefined}
+              value={summary ? rubles(summary.spent) : undefined}
               loading={!summary && !error}
             />
             <Metric
@@ -158,8 +177,6 @@ export default function Dashboard() {
             />
           </div>
         </section>
-
-        <SubscriptionCard />
 
         <section className="mb-6" aria-label="Использование токенов">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -371,7 +388,7 @@ export default function Dashboard() {
                   <span className="text-sm text-[#a5a5a1]">Расход средств</span>
                   <span className="text-2xl font-semibold">
                     {summary ? (
-                      rubles(summary.cost, 2)
+                      rubles(summary.cost)
                     ) : error ? (
                       "Недоступно"
                     ) : (
@@ -482,7 +499,7 @@ export default function Dashboard() {
                     </td>
                     <td className="whitespace-nowrap px-4 py-4 text-right tabular-nums">
                       {request.paymentSource === "SUBSCRIPTION"
-                        ? `${Number(request.chargedCost).toLocaleString("ru-RU", { maximumFractionDigits: 8 })} кр.`
+                        ? `${formatBalance(request.chargedCost)} кр.`
                         : rubles(request.chargedCost)}
                     </td>
                     <td className="whitespace-nowrap px-5 py-4 text-right sm:px-6">
@@ -533,11 +550,8 @@ function Metric({
   );
 }
 
-function rubles(value: string, maximumFractionDigits = 8) {
-  return `₽ ${Number(value).toLocaleString("ru-RU", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits,
-  })}`;
+function rubles(value: string) {
+  return `₽ ${formatBalance(value)}`;
 }
 
 function statusLabel(status: string) {
