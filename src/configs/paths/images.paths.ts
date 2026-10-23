@@ -2,6 +2,8 @@ export const IMAGES = {
   LOGO: "/logo.png",
   ICON: "/icon.png",
   IMAGES: {
+    ERROR: "/images/error.webp",
+    NOT_FOUND: "/images/notfound.webp",
     LANDING: "/images/landing.png",
     CRYPTOBOT: "/images/cryptobot.png",
     CARD: "/images/card.png",
