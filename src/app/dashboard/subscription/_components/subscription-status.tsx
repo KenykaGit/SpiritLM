@@ -22,7 +22,7 @@ export function SubscriptionStatus({ data }: { data: SubscriptionOverview }) {
             id="subscription-status-title"
             className="mt-1 text-2xl font-semibold"
           >
-            {current ? `Spirit ${current.planName}` : "Подписка не подключена"}
+            {current ? `${current.planName.replace(/^Access:\s*/, "")}` : "Подписка не подключена"}
           </h2>
           <p className="mt-2 text-sm text-[#a5a5a1]">
             {current

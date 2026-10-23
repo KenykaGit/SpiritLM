@@ -16,7 +16,7 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionPlanId, SubscriptionPlan> =
       amount: 390,
       credits: 645,
       requestsPerMinute: 10,
-      concurrentRequests: 1,
+      concurrentRequests: 2,
     },
     vega: {
       id: "vega",
