@@ -6,7 +6,7 @@ export function Skeleton({
   return (
     <span
       aria-hidden="true"
-      className={`block animate-pulse rounded-sm bg-white/[0.09] ${className}`}
+      className={`block animate-pulse rounded-sm bg-white/[0.09] motion-reduce:animate-none ${className}`}
     />
   );
 }

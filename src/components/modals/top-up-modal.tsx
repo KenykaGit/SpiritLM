@@ -234,6 +234,7 @@ function TopUpPaymentForm({
 
   async function cancelInvoice() {
     if (!payment || cancelling) return;
+    redirectAfterCreation.current = false;
     setCancelling(true);
     setError(null);
     try {
@@ -412,10 +413,19 @@ function TopUpPaymentForm({
             Отмена
           </Button>
           {payment?.status === "PENDING" && payment.invoiceUrl ? (
-            <Button asChild size="sm" className="rounded-lg px-4 text-sm">
-              <a href={payment.invoiceUrl} target="_blank" rel="noopener noreferrer">
-                Перейти к оплате
-              </a>
+            <Button
+              asChild={!cancelling}
+              disabled={cancelling}
+              size="sm"
+              className="rounded-lg px-4 text-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
+            >
+              {cancelling ? (
+                "Перейти к оплате"
+              ) : (
+                <a href={payment.invoiceUrl} target="_blank" rel="noopener noreferrer">
+                  Перейти к оплате
+                </a>
+              )}
             </Button>
           ) : (
             <Button

@@ -16,6 +16,11 @@ import type {
 import { dashboardFetch } from "@/lib/dashboard-client";
 import { useSubscription } from "../../_components/use-subscription";
 import { SubscriptionStatus, credits, date } from "./subscription-status";
+import {
+  SubscriptionHistorySkeleton,
+  SubscriptionPlansSkeleton,
+  SubscriptionStatusSkeleton,
+} from "./subscription-skeleton";
 
 const buttonClass =
   "inline-flex min-h-11 items-center justify-center rounded-xl bg-[#ffe02e] px-4 py-2 text-sm font-semibold text-[#171717] transition-colors hover:bg-[#ffcc36] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ffe02e] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b1b1b] disabled:cursor-not-allowed disabled:opacity-50";
@@ -126,6 +131,7 @@ export function SubscriptionDashboard() {
 
   async function cancelOrder(id: string) {
     if (pending) return;
+    redirectAfterCheckout.current = false;
     setPending(true);
     try {
       await dashboardFetch(PATHS.API.DASHBOARD.SUBSCRIPTION_ORDER(id), {
@@ -174,16 +180,9 @@ export function SubscriptionDashboard() {
           )}
           {data ? (
             <SubscriptionStatus data={data} />
-          ) : (
-            !error && (
-              <p
-                role="status"
-                className="rounded-[20px] bg-[#1b1b1b] p-6 text-[#a5a5a1]"
-              >
-                Загружаем подписку…
-              </p>
-            )
-          )}
+          ) : !error ? (
+            <SubscriptionStatusSkeleton />
+          ) : null}
         </section>
         <section aria-labelledby="subscription-plans-title">
           <h2
@@ -192,6 +191,7 @@ export function SubscriptionDashboard() {
           >
             Выберите тариф
           </h2>
+          {!data && !error && <SubscriptionPlansSkeleton />}
           <div className="grid gap-4 lg:grid-cols-3">
             {data?.plans.map((plan) => (
               <article
@@ -288,6 +288,7 @@ export function SubscriptionDashboard() {
           >
             История покупок
           </h2>
+          {!data && !error && <SubscriptionHistorySkeleton />}
           {data?.orders.length === 0 && (
             <p className="mt-4 text-sm text-[#a5a5a1]">Покупок пока нет.</p>
           )}
@@ -329,20 +330,29 @@ export function SubscriptionDashboard() {
                       </button>
                     )}
                     {item.invoiceUrl && (
-                      <a
-                        href={item.invoiceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <Button
+                        asChild={!pending}
+                        disabled={pending}
                         className={buttonClass}
                       >
-                        Оплатить счёт
-                      </a>
+                        {pending ? (
+                          "Оплатить счёт"
+                        ) : (
+                          <a
+                            href={item.invoiceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Оплатить счёт
+                          </a>
+                        )}
+                      </Button>
                     )}
                     <button
                       type="button"
                       disabled={pending}
                       onClick={() => void cancelOrder(item.id)}
-                      className="min-h-11 rounded-lg px-3 text-[#a5a5a1] hover:bg-[#242424] focus-visible:ring-2 focus-visible:ring-[#ffe02e]"
+                      className="min-h-11 rounded-lg px-3 text-[#a5a5a1] hover:bg-[#242424] focus-visible:ring-2 focus-visible:ring-[#ffe02e] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Отменить счёт
                     </button>
@@ -418,8 +428,19 @@ export function SubscriptionDashboard() {
           {displayedOrder?.status === "PAID" ? (
             <Button type="button" size="sm" onClick={() => setSelected(null)}>Готово</Button>
           ) : displayedOrder?.invoiceUrl ? (
-            <Button asChild size="sm" className="px-4 text-sm">
-              <a href={displayedOrder.invoiceUrl} target="_blank" rel="noopener noreferrer">Перейти к оплате</a>
+            <Button
+              asChild={!pending}
+              disabled={pending}
+              size="sm"
+              className="px-4 text-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
+            >
+              {pending ? (
+                "Перейти к оплате"
+              ) : (
+                <a href={displayedOrder.invoiceUrl} target="_blank" rel="noopener noreferrer">
+                  Перейти к оплате
+                </a>
+              )}
             </Button>
           ) : (
             <Button
